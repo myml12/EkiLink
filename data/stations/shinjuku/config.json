@@ -1,0 +1,40 @@
+{
+  "stationName": "新宿駅",
+  "center": [139.7003, 35.6896],
+  "zoom": 18.5,
+  "pitch": 65,
+  "bearing": -20,
+  "floorOffsets": {
+    "1": 60,
+    "0": 50,
+    "-1": 45,
+    "-2": 30,
+    "-2.5": 25,
+    "-3": 20,
+    "-4.5": 5,
+    "-5": 5,
+    "-6": 0
+  },
+  "floors": [
+    { "id": "1", "offset": 60, "nodeFloor": 1 },
+    { "id": "B1", "offset": 45, "nodeFloor": -1 },
+    { "id": "B2", "offset": 30, "nodeFloor": -2 },
+    { "id": "B3", "offset": 20, "nodeFloor": -3 },
+    { "id": "B5", "offset": 5, "nodeFloor": -4.5 },
+    { "id": "B6", "offset": 0, "nodeFloor": -6 }
+  ],
+  "floorColors": {
+    "1": "#fb7185",
+    "B1": "#38bdf8",
+    "B2": "#34d399",
+    "B3": "#a855f7",
+    "B5": "#f59e0b",
+    "B6": "#ec4899"
+  },
+  "filePrefix": "Shinjuku",
+  "dataFiles": {
+    "node": "node.geojson",
+    "link": "link.geojson"
+  }
+}
+
