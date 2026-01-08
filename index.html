@@ -550,7 +550,9 @@
                 stroked: false,
                 parameters: {
                     depthTest: true,
-                    depthFunc: 519
+                    depthFunc: 519, // GL_LEQUAL
+                    blend: true,
+                    blendFunc: [770, 771, 1, 771] // GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA
                 },
                 dataTransform: (data) => {
                     data.features.forEach(f => {
