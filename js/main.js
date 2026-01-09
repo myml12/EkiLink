@@ -15,6 +15,7 @@ let config = null;
 let nodesData = null;
 let linksData = null;
 let facilitiesData = {}; // 階層ごとのFacilityデータ
+let floorsData = {}; // 階層ごとのFloorデータ（階層名取得用）
 let nodeFloorMap = {};
 let currentPopup = null;
 let currentStation = null;
@@ -278,7 +279,7 @@ async function switchStation(stationId) {
         clearRoute();
 
         // deck.glレイヤー（MapboxLayer）を削除
-        ['network-link-layer', 'network-node-layer', 'route-layer', 'space-circle-layer', 'selected-nodes-layer'].forEach(layerId => {
+        ['network-link-layer', 'network-node-layer', 'route-layer', 'space-circle-layer', 'selected-nodes-layer', 'facility-layer'].forEach(layerId => {
             try {
                 if (map.getLayer(layerId)) {
                     map.removeLayer(layerId);
@@ -442,10 +443,48 @@ async function switchStation(stationId) {
             }
 
             // ---------------------------------------------------------------
-            // 優先度2: Facility/Spaceのクリック判定 (MapLibre レイヤー)
+            // 優先度2: Facilityのクリック判定 (deck.gl レイヤー)
             // ---------------------------------------------------------------
             // ノードがクリックされていない場合のみ実行
 
+            if (deckInstance) {
+                // pickObjectでFacilityレイヤーをチェック
+                const facilityPickInfo = deckInstance.pickObject({
+                    x: e.point.x,
+                    y: e.point.y,
+                    radius: 5,
+                    layerIds: ['facility-layer']
+                });
+
+                if (facilityPickInfo && facilityPickInfo.object) {
+                    // 経路検索モードの場合
+                    if (routeSelectionMode) {
+                        // Facilityから最も近いノードを探して選択
+                        const coords = facilityPickInfo.object.properties._originalCoords ||
+                            (facilityPickInfo.object.geometry.coordinates.length >= 2 ?
+                                [facilityPickInfo.object.geometry.coordinates[0], facilityPickInfo.object.geometry.coordinates[1]] :
+                                facilityPickInfo.object.geometry.coordinates);
+                        const nearestNode = findNearestNodeToFacility(coords[0], coords[1]);
+                        if (nearestNode) {
+                            handleRouteNodeSelection(nearestNode);
+                        }
+                        return;
+                    }
+
+                    // 通常モードの場合 (Facility情報をポップアップ表示)
+                    const coords = facilityPickInfo.coordinate ||
+                        facilityPickInfo.object.properties._originalCoords ||
+                        (facilityPickInfo.object.geometry.coordinates.length >= 2 ?
+                            [facilityPickInfo.object.geometry.coordinates[0], facilityPickInfo.object.geometry.coordinates[1]] :
+                            facilityPickInfo.object.geometry.coordinates);
+                    showFacilityInfo(facilityPickInfo.object, coords);
+                    return;
+                }
+            }
+
+            // ---------------------------------------------------------------
+            // 優先度3: Spaceのクリック判定 (MapLibre レイヤー)
+            // ---------------------------------------------------------------
             // queryRenderedFeatures: 画面上のピクセル座標からMapLibreレイヤーを特定する
             const features = map.queryRenderedFeatures(e.point, {
                 layers: config.floors.map(f => `space-layer-${f.id}`)
@@ -460,79 +499,8 @@ async function switchStation(stationId) {
                     return;
                 }
 
-                // 通常モードの場合 (ポップアップ表示)
-                const props = spaceFeature.properties;
-
-                // categoryコードの意味を取得（specification.md参照）
-                const getCategoryName = (category) => {
-                    const categoryMap = {
-                        'B001': '商業施設',
-                        'B002': '事務所',
-                        'B007': 'トイレ（男性）',
-                        'B008': 'トイレ（女性）',
-                        'B009': 'トイレ（共用）',
-                        'B011': '多機能トイレ',
-                        'B012': '多機能トイレ',
-                        'B013': '多機能トイレ',
-                        'B014': '多機能トイレ',
-                        'B019': '通路',
-                        'B021': '階段の範囲',
-                        'B022': 'エレベーターの範囲',
-                        'B023': 'エスカレーターの範囲',
-                        'B029': '通路/コンコース',
-                        'B999': '屋外'
-                    };
-                    return categoryMap[category] || category;
-                };
-
-                let html = '<div class="space-popup">';
-                html += '<h3>空間情報</h3>';
-
-                if (props.category) {
-                    html += '<div class="info-row">';
-                    html += '<span class="info-label">種別:</span>';
-                    html += `<span class="info-value">${getCategoryName(props.category)}</span>`;
-                    html += '</div>';
-                    // コードも表示
-                    html += '<div class="info-row">';
-                    html += '<span class="info-label">コード:</span>';
-                    html += `<span class="info-value" style="font-size: 0.8em; opacity: 0.7;">${props.category}</span>`;
-                    html += '</div>';
-                }
-
-                // 名称は空白でない場合のみ表示
-                if (props.name && props.name.trim() !== '') {
-                    html += '<div class="info-row">';
-                    html += '<span class="info-label">名称:</span>';
-                    html += `<span class="info-value">${props.name.trim()}</span>`;
-                    html += '</div>';
-                }
-
-                // その他の属性情報（specification.md参照）
-                if (props.restricted !== undefined) {
-                    const restrictedText = props.restricted === '1' ? '制限あり' : '制限なし';
-                    html += '<div class="info-row">';
-                    html += '<span class="info-label">進入制限:</span>';
-                    html += `<span class="info-value">${restrictedText}</span>`;
-                    html += '</div>';
-                }
-
-                if (props.toll !== undefined) {
-                    const tollText = props.toll === '1' ? '不明' : props.toll === '2' ? '有料' : '無料';
-                    html += '<div class="info-row">';
-                    html += '<span class="info-label">有料区分:</span>';
-                    html += `<span class="info-value">${tollText}</span>`;
-                    html += '</div>';
-                }
-
-                html += '</div>';
-                new maplibregl.Popup({
-                    closeButton: true,
-                    className: 'space-info-popup'
-                })
-                    .setLngLat(e.lngLat) // Facilityは地面にあるのでlngLatでOK
-                    .setHTML(html)
-                    .addTo(map);
+                // 通常モードの場合 (右下に小さく軽めに表示)
+                showSpaceInfo(spaceFeature.properties);
             }
         });
 
@@ -571,21 +539,39 @@ async function setupMap() {
     linksData = links;
     nodeFloorMap = {};
 
-    // Facilityデータを読み込む（階層ごと）
+    // FacilityデータとFloorデータを読み込む（階層ごと）
     facilitiesData = {};
+    floorsData = {};
     const facilityPromises = config.floors.map(async f => {
-        const fileName = stationLogic.getSpaceFileName(config.filePrefix, f.id).replace('Space', 'Facility');
+        // Facilityデータを読み込む
+        const facilityFileName = stationLogic.getSpaceFileName(config.filePrefix, f.id).replace('Space', 'Facility');
         try {
-            const response = await fetch(`${dataDir}${fileName}`);
-            if (response.ok && response.status === 200) {
-                const data = await response.json();
-                if (data && data.type === 'FeatureCollection') {
-                    facilitiesData[f.id] = data;
+            const facilityResponse = await fetch(`${dataDir}${facilityFileName}`);
+            if (facilityResponse.ok && facilityResponse.status === 200) {
+                const facilityData = await facilityResponse.json();
+                if (facilityData && facilityData.type === 'FeatureCollection') {
+                    facilitiesData[f.id] = facilityData;
                 }
             }
         } catch (e) {
             // Facilityファイルが存在しない場合は無視
         }
+
+        // Floorデータを読み込む（階層名取得用）
+        const floorFileName = stationLogic.getSpaceFileName(config.filePrefix, f.id).replace('Space', 'Floor');
+        try {
+            const floorResponse = await fetch(`${dataDir}${floorFileName}`);
+            if (floorResponse.ok && floorResponse.status === 200) {
+                const floorData = await floorResponse.json();
+                if (floorData && floorData.type === 'FeatureCollection' && floorData.features.length > 0) {
+                    floorsData[f.id] = floorData.features[0]; // 最初のfeatureを使用
+                }
+            }
+        } catch (e) {
+            // Floorファイルが存在しない場合は無視
+        }
+
+        return null;
     });
     await Promise.all(facilityPromises);
 
@@ -646,6 +632,9 @@ async function setupMap() {
                 'fill-extrusion-opacity': 0.25
             }
         });
+
+        // Facilityレイヤーは後でdeck.glレイヤーとして追加（3D空間での正確な配置のため）
+
         return { id: f.id, data: data, nodeFloor: f.nodeFloor };
     });
 
@@ -861,6 +850,92 @@ async function setupMap() {
     map.addLayer(nodeLayer);
     map.addLayer(spaceCircleLayer);
 
+    // Facilityレイヤーをdeck.glレイヤーとして追加（3D空間での正確な配置）
+    // 全ての階層のFacilityを1つのレイヤーにまとめる
+    const allFacilities = [];
+    for (const floorId in facilitiesData) {
+        if (facilitiesData[floorId]) {
+            facilitiesData[floorId].features.forEach(facility => {
+                // floor_idから階層を特定
+                let facilityFloor = null;
+
+                // floorsDataからfloor_idが一致するFloorを探す
+                for (const fId in floorsData) {
+                    const floorData = floorsData[fId];
+                    if (floorData.properties.id === facility.properties.floor_id) {
+                        const ordinal = parseFloat(floorData.properties.ordinal);
+                        if (!isNaN(ordinal)) {
+                            facilityFloor = ordinal;
+                        }
+                        break;
+                    }
+                }
+
+                // floorsDataで見つからない場合、config.floorsから対応する階層を探す
+                if (facilityFloor === null) {
+                    // floorId（config.floorsのid）から階層を取得
+                    const floorConfig = config.floors.find(f => f.id === floorId);
+                    if (floorConfig) {
+                        facilityFloor = floorConfig.nodeFloor;
+                    } else {
+                        // デフォルトとしてfloorIdを使用（数値の場合）
+                        const numericFloor = parseFloat(floorId);
+                        if (!isNaN(numericFloor)) {
+                            facilityFloor = numericFloor;
+                        }
+                    }
+                }
+
+                // 階層が見つからない場合はスキップ
+                if (facilityFloor === null) {
+                    console.warn(`[${config.stationName}] Facility ${facility.properties.id} の階層を特定できませんでした`);
+                    return;
+                }
+
+                const z = config.floorOffsets[String(facilityFloor)] ?? 0;
+                const coords = facility.geometry.coordinates;
+
+                allFacilities.push({
+                    type: 'Feature',
+                    geometry: {
+                        type: 'Point',
+                        coordinates: [coords[0], coords[1], z + SPACE_HEIGHT + 0.5] // Spaceレイヤーの上に表示
+                    },
+                    properties: {
+                        ...facility.properties,
+                        _originalCoords: [coords[0], coords[1]],
+                        _floor: facilityFloor
+                    }
+                });
+            });
+        }
+    }
+
+    const facilityLayer = new MapboxLayer({
+        id: 'facility-layer',
+        type: deck.GeoJsonLayer,
+        data: {
+            type: 'FeatureCollection',
+            features: allFacilities
+        },
+        pickable: true,
+        getPointRadius: 1.0, // ノードより小さく
+        radiusMinPixels: 4, // 拡大縮小してもサイズが変わらないように固定
+        radiusMaxPixels: 4, // 拡大縮小してもサイズが変わらないように固定
+        getFillColor: [100, 116, 139, 220], // シックなグレー（slate-500）
+        stroked: true,
+        getLineColor: [71, 85, 105, 255], // やや濃いグレー（slate-600）
+        lineWidthMinPixels: 1, // 枠線を細く
+        lineWidthMaxPixels: 1, // 拡大縮小してもサイズが変わらないように固定
+        parameters: {
+            depthTest: true,
+            depthFunc: 519,
+            blend: true,
+            blendFunc: [770, 771, 1, 771]
+        }
+    });
+    map.addLayer(facilityLayer);
+
 
     // 選択されたノードを表示するレイヤー（出発点・到着点）
     const selectedNodesLayer = new MapboxLayer({
@@ -1067,6 +1142,78 @@ function handleRouteFacilitySelection(spaceFeature) {
 }
 
 /**
+ * Space情報を右下に表示する関数
+ * @param {Object} props - Spaceのproperties
+ */
+function showSpaceInfo(props) {
+    const panel = document.getElementById('space-info-panel');
+    const content = document.getElementById('space-info-content');
+
+    if (!panel || !content) {
+        console.warn('空間情報パネルの要素が見つかりません');
+        return;
+    }
+
+    // categoryコードの意味を取得（specification.md参照）
+    const getCategoryName = (category) => {
+        const categoryMap = {
+            'B001': '商業施設',
+            'B002': '事務所',
+            'B007': 'トイレ（男性）',
+            'B008': 'トイレ（女性）',
+            'B009': 'トイレ（共用）',
+            'B011': '多機能トイレ',
+            'B012': '多機能トイレ',
+            'B013': '多機能トイレ',
+            'B014': '多機能トイレ',
+            'B019': '通路',
+            'B021': '階段の範囲',
+            'B022': 'エレベーターの範囲',
+            'B023': 'エスカレーターの範囲',
+            'B029': '通路/コンコース',
+            'B999': '屋外'
+        };
+        return categoryMap[category] || category;
+    };
+
+    let html = '';
+
+    if (props.category) {
+        html += `<div class="space-category">${getCategoryName(props.category)}</div>`;
+        html += `<div class="space-code">${props.category}</div>`;
+    }
+
+    // 名称は空白でない場合のみ表示
+    if (props.name && props.name.trim() !== '') {
+        html += `<div class="space-name">${props.name.trim()}</div>`;
+    }
+
+    content.innerHTML = html;
+
+    // 既存のタイマーをクリア
+    if (showSpaceInfo.timeoutId) {
+        clearTimeout(showSpaceInfo.timeoutId);
+    }
+
+    // 表示アニメーション
+    panel.style.display = 'block';
+    // 次のフレームでアニメーションを開始
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            panel.classList.add('show');
+        });
+    });
+
+    // 3秒後に自動的に非表示
+    showSpaceInfo.timeoutId = setTimeout(() => {
+        panel.classList.remove('show');
+        setTimeout(() => {
+            panel.style.display = 'none';
+        }, 300);
+    }, 3000);
+}
+
+/**
  * Facilityカテゴリ名を取得
  */
 function getFacilityCategoryName(category) {
@@ -1082,6 +1229,99 @@ function getFacilityCategoryName(category) {
         'F045': '公衆無線LAN'
     };
     return categoryMap[category] || category;
+}
+
+/**
+ * Facility情報を表示する関数
+ * @param {Object} feature - FacilityのGeoJSON feature
+ * @param {Array<number>} lngLat - [経度, 緯度] の配列
+ */
+function showFacilityInfo(feature, lngLat) {
+    if (currentPopup) {
+        currentPopup.remove();
+    }
+
+    const props = feature.properties;
+    const categoryName = getFacilityCategoryName(props.category);
+
+    // floor_idから階層情報を取得
+    let floorName = '不明';
+    if (props.floor_id) {
+        // floorsDataからfloor_idが一致するFloorを探す
+        for (const floorId in floorsData) {
+            const floorData = floorsData[floorId];
+            if (floorData.properties.id === props.floor_id) {
+                // Floorのordinalから階層名を取得
+                const ordinal = parseFloat(floorData.properties.ordinal);
+                if (!isNaN(ordinal)) {
+                    floorName = stationLogic.getFloorName(ordinal);
+                } else if (floorData.properties.name) {
+                    floorName = floorData.properties.name;
+                }
+                break;
+            }
+        }
+
+        // floorsDataで見つからない場合、configから階層を探す
+        if (floorName === '不明') {
+            // floor_idが一致する階層を探す（簡易的に階層IDを使用）
+            const floorConfig = config.floors.find(f => {
+                // より正確にはFloorデータを読み込んで確認する必要があるが、簡易的に階層IDを使用
+                return true;
+            });
+            if (floorConfig) {
+                floorName = stationLogic.getFloorName(floorConfig.nodeFloor);
+            }
+        }
+    }
+
+    let html = '<div class="space-popup">';
+    html += '<h3>設備情報</h3>';
+
+    if (props.category) {
+        html += '<div class="info-row">';
+        html += '<span class="info-label">種別:</span>';
+        html += `<span class="info-value">${categoryName}</span>`;
+        html += '</div>';
+        html += '<div class="info-row">';
+        html += '<span class="info-label">コード:</span>';
+        html += `<span class="info-value" style="font-size: 0.8em; opacity: 0.7;">${props.category}</span>`;
+        html += '</div>';
+    }
+
+    // 名称は空白でない場合のみ表示
+    if (props.name && props.name.trim() !== '') {
+        html += '<div class="info-row">';
+        html += '<span class="info-label">名称:</span>';
+        html += `<span class="info-value">${props.name.trim()}</span>`;
+        html += '</div>';
+    }
+
+    html += '<div class="info-row">';
+    html += '<span class="info-label">階層:</span>';
+    html += `<span class="info-value">${floorName}</span>`;
+    html += '</div>';
+
+    if (props.source) {
+        const sourceText = props.source === '1' ? 'フロアマップ' :
+            props.source === '2' ? 'CAD' :
+                props.source === '3' ? 'BIM' :
+                    props.source === '4' ? '3次元地図' : 'その他';
+        html += '<div class="info-row">';
+        html += '<span class="info-label">データ源:</span>';
+        html += `<span class="info-value">${sourceText}</span>`;
+        html += '</div>';
+    }
+
+    html += '</div>';
+
+    currentPopup = new maplibregl.Popup({
+        closeButton: true,
+        className: 'space-info-popup'
+    })
+        .setLngLat(lngLat)
+        .setHTML(html)
+        .addTo(map);
 }
 
 /**

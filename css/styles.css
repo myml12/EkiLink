@@ -35,7 +35,7 @@ body {
 .station-selector {
     position: absolute;
     top: 15px;
-    right: 15px;
+    right: 50px; /* 経路検索パネルの幅分左にずらす */
     background: rgba(15, 23, 42, 0.8);
     backdrop-filter: blur(8px);
     color: #f1f5f9;
@@ -45,6 +45,7 @@ body {
     z-index: 10;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    min-width: 200px;
 }
 
 .station-selector select {
@@ -284,5 +285,56 @@ b {
 
 .route-actions {
     margin-top: 12px;
+}
+
+/* 空間情報表示パネル（右下） */
+.space-info-panel {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(6px);
+    color: #f1f5f9;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-size: 0.8em;
+    z-index: 10;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    max-width: 250px;
+    line-height: 1.4;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.space-info-panel.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#space-info-content {
+    color: #cbd5e1;
+}
+
+#space-info-content .space-category {
+    font-weight: 500;
+    color: #38bdf8;
+    font-size: 0.9em;
+    margin-bottom: 4px;
+}
+
+#space-info-content .space-code {
+    font-size: 0.75em;
+    opacity: 0.6;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+#space-info-content .space-name {
+    margin-top: 4px;
+    color: #e2e8f0;
+    font-size: 0.85em;
 }
 

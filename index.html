@@ -40,18 +40,21 @@
     <div class="info-panel">
         <b style="font-size: 1.2em; display: block; margin-bottom: 5px; color: #fff;" id="station-name">駅 3Dスケルトン</b>
         ・フロア (Space): 階層別に色分け描画<br>
-        ・経路 (Link/Node): 最前面にグロー描画<br>
+        ・経路 (Link): シアン色で3D接続<br>
+        ・節点 (Node): 階層別に色分け<br>
         <div class="legend-item">
             <div class="line" style="background: #00ffff; color: #00ffff;"></div> 経路: Link (3D接続)
         </div>
         <div class="legend-item">
-            <div class="dot" style="background: #fbbf24; color: #fbbf24;"></div> 節点: Node (地点)
+            <div class="dot" style="background: #38bdf8; color: #38bdf8;"></div> 節点: Node (階層別色分け)
         </div>
         <div class="legend-item">
-            <div class="dot" style="background: rgba(129, 212, 250, 0.4); border-radius: 2px;"></div> 通路エリア (Space)
+            <div class="dot"
+                style="background: rgba(100, 116, 139, 0.8); color: rgba(100, 116, 139, 0.8); border: 1px solid rgba(71, 85, 105, 0.8);">
+            </div> 設備: Facility
         </div>
         <div class="legend-item">
-            <div class="dot" style="background: rgba(255, 171, 145, 0.4); border-radius: 2px;"></div> 階段エリア (Space)
+            <div class="line" style="background: #ef4444; color: #ef4444;"></div> 検索経路: 最短経路
         </div>
         <small style="opacity: 0.6; display: block; margin-top: 10px; color: #94a3b8;">右ドラッグで回転、Ctrl+ドラッグで高度変更</small>
     </div>
@@ -84,6 +87,11 @@
             <button id="search-route" class="route-btn-primary" disabled>経路検索</button>
             <button id="clear-route" class="route-btn-secondary">クリア</button>
         </div>
+    </div>
+
+    <!-- 空間情報表示エリア（右下） -->
+    <div id="space-info-panel" class="space-info-panel" style="display: none;">
+        <div id="space-info-content"></div>
     </div>
 
 </body>
