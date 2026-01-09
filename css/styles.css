@@ -181,3 +181,108 @@ b {
     box-shadow: none;
 }
 
+/* 経路検索パネル */
+.route-search-panel {
+    position: absolute;
+    bottom: 15px;
+    left: 15px;
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(8px);
+    color: #f1f5f9;
+    padding: 18px;
+    border-radius: 12px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    z-index: 10;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    min-width: 250px;
+}
+
+.route-control {
+    margin-bottom: 12px;
+}
+
+.route-selection {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.route-btn {
+    background: rgba(30, 41, 59, 0.9);
+    color: #f1f5f9;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.route-btn:hover {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: rgba(56, 189, 248, 0.5);
+}
+
+.route-btn.active {
+    background: rgba(56, 189, 248, 0.3);
+    border-color: rgba(56, 189, 248, 0.6);
+    color: #38bdf8;
+}
+
+.route-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.route-btn-primary {
+    background: rgba(239, 68, 68, 0.8);
+    color: #fff;
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.route-btn-primary:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 1);
+    border-color: rgba(239, 68, 68, 0.8);
+}
+
+.route-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.route-btn-secondary {
+    background: rgba(30, 41, 59, 0.9);
+    color: #f1f5f9;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+}
+
+.route-btn-secondary:hover {
+    background: rgba(56, 189, 248, 0.2);
+    border-color: rgba(56, 189, 248, 0.5);
+}
+
+.route-info {
+    color: #94a3b8;
+    font-size: 0.85em;
+    flex: 1;
+    text-align: right;
+}
+
+.route-actions {
+    margin-top: 12px;
+}
+

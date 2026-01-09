@@ -64,6 +64,28 @@
         </select>
     </div>
 
+    <div class="route-search-panel">
+        <h3 style="margin: 0 0 12px 0; color: #38bdf8; font-size: 1em;">経路検索</h3>
+        <div class="route-control">
+            <label style="display: block; margin-bottom: 6px; color: #94a3b8; font-size: 0.85em;">出発点:</label>
+            <div class="route-selection">
+                <button id="select-start" class="route-btn">選択</button>
+                <span id="start-info" class="route-info">未選択</span>
+            </div>
+        </div>
+        <div class="route-control">
+            <label style="display: block; margin-bottom: 6px; color: #94a3b8; font-size: 0.85em;">到着点:</label>
+            <div class="route-selection">
+                <button id="select-end" class="route-btn">選択</button>
+                <span id="end-info" class="route-info">未選択</span>
+            </div>
+        </div>
+        <div class="route-actions">
+            <button id="search-route" class="route-btn-primary" disabled>経路検索</button>
+            <button id="clear-route" class="route-btn-secondary">クリア</button>
+        </div>
+    </div>
+
 </body>
 
 </html>

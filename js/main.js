@@ -13,10 +13,21 @@ const LINK_Z_OFFSET = SPACE_HEIGHT + 0.5; // Spaceレイヤーの上0.5の位置
 let map = null;
 let config = null;
 let nodesData = null;
+let linksData = null;
+let facilitiesData = {}; // 階層ごとのFacilityデータ
 let nodeFloorMap = {};
 let currentPopup = null;
 let currentStation = null;
 let stationLogic = null; // 駅ごとのロジック
+
+// 経路検索関連
+let routeGraph = null; // グラフ構造 {nodeId: {neighborId: distance, ...}, ...}
+let routeStartNode = null; // 出発点のノードID
+let routeEndNode = null; // 到着点のノードID
+let routePath = null; // 検索された経路（ノードIDの配列）
+let routeSelectionMode = null; // 'start' | 'end' | null
+let routeLayer = null; // 経路表示レイヤー
+let selectedNodesLayer = null; // 選択されたノード表示レイヤー
 
 // ============================================================================
 // ユーティリティ関数
@@ -46,7 +57,11 @@ function findNearestNode(lng, lat, tolerance = 0.0001) {
     let minDistance = Infinity;
 
     nodesData.features.forEach(node => {
-        const coords = node.geometry.coordinates;
+        // 元の2D座標を使用（_originalCoordsがあればそれを使用、なければgeometry.coordinatesの最初の2要素）
+        const coords = node.properties._originalCoords ||
+            (node.geometry.coordinates.length >= 2 ?
+                [node.geometry.coordinates[0], node.geometry.coordinates[1]] :
+                node.geometry.coordinates);
         const distance = Math.sqrt(
             Math.pow(coords[0] - lng, 2) + Math.pow(coords[1] - lat, 2)
         );
@@ -57,6 +72,151 @@ function findNearestNode(lng, lat, tolerance = 0.0001) {
     });
 
     return nearestNode;
+}
+
+/**
+ * Facilityから最も近いNodeを見つける
+ */
+function findNearestNodeToFacility(facilityLng, facilityLat, tolerance = 0.001) {
+    if (!nodesData) return null;
+    let nearestNode = null;
+    let minDistance = Infinity;
+
+    nodesData.features.forEach(node => {
+        const coords = node.geometry.coordinates;
+        const distance = Math.sqrt(
+            Math.pow(coords[0] - facilityLng, 2) + Math.pow(coords[1] - facilityLat, 2)
+        );
+        if (distance < minDistance && distance < tolerance) {
+            minDistance = distance;
+            nearestNode = node;
+        }
+    });
+
+    return nearestNode;
+}
+
+/**
+ * 2点間の距離を計算（メートル単位の概算）
+ */
+function calculateDistance(lng1, lat1, lng2, lat2) {
+    const R = 6371000; // 地球の半径（メートル）
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+/**
+ * グラフ構造を構築（NodeとLinkから）
+ */
+function buildRouteGraph() {
+    if (!nodesData || !linksData) {
+        console.warn('グラフ構築: nodesDataまたはlinksDataがありません');
+        return {};
+    }
+
+    const graph = {};
+    const nodeCoords = {}; // nodeId -> [lng, lat]
+
+    // ノードの座標を記録
+    nodesData.features.forEach(node => {
+        const nodeId = node.properties.node_id;
+        const coords = node.geometry.coordinates;
+        nodeCoords[nodeId] = [coords[0], coords[1]];
+        graph[nodeId] = {};
+    });
+
+    // リンクからグラフを構築
+    linksData.features.forEach(link => {
+        const startId = link.properties.start_id;
+        const endId = link.properties.end_id;
+
+        if (nodeCoords[startId] && nodeCoords[endId]) {
+            const distance = calculateDistance(
+                nodeCoords[startId][0], nodeCoords[startId][1],
+                nodeCoords[endId][0], nodeCoords[endId][1]
+            );
+
+            // 双方向のリンクを追加
+            if (!graph[startId][endId] || graph[startId][endId] > distance) {
+                graph[startId][endId] = distance;
+            }
+            if (!graph[endId][startId] || graph[endId][startId] > distance) {
+                graph[endId][startId] = distance;
+            }
+        }
+    });
+
+    return graph;
+}
+
+/**
+ * ダイクストラ法による最短経路探索
+ */
+function dijkstra(graph, startId, endId) {
+    if (!graph[startId] || !graph[endId]) {
+        return null; // 開始点または終了点がグラフに存在しない
+    }
+
+    const distances = {};
+    const previous = {};
+    const unvisited = new Set();
+    const visited = new Set();
+
+    // 初期化
+    for (const nodeId in graph) {
+        distances[nodeId] = Infinity;
+        previous[nodeId] = null;
+        unvisited.add(nodeId);
+    }
+    distances[startId] = 0;
+
+    while (unvisited.size > 0) {
+        // 未訪問ノードの中で距離が最小のものを選択
+        let currentId = null;
+        let minDistance = Infinity;
+        for (const nodeId of unvisited) {
+            if (distances[nodeId] < minDistance) {
+                minDistance = distances[nodeId];
+                currentId = nodeId;
+            }
+        }
+
+        if (currentId === null || minDistance === Infinity) {
+            break; // 到達不可能
+        }
+
+        if (currentId === endId) {
+            // 終了点に到達
+            const path = [];
+            let node = endId;
+            while (node !== null) {
+                path.unshift(node);
+                node = previous[node];
+            }
+            return path;
+        }
+
+        unvisited.delete(currentId);
+        visited.add(currentId);
+
+        // 隣接ノードを更新
+        for (const neighborId in graph[currentId]) {
+            if (visited.has(neighborId)) continue;
+
+            const distance = distances[currentId] + graph[currentId][neighborId];
+            if (distance < distances[neighborId]) {
+                distances[neighborId] = distance;
+                previous[neighborId] = currentId;
+            }
+        }
+    }
+
+    return null; // 経路が見つからない
 }
 
 // ============================================================================
@@ -114,8 +274,11 @@ async function switchStation(stationId) {
 
     // 既存のレイヤーとソースを削除
     if (map) {
+        // 経路をクリア
+        clearRoute();
+
         // deck.glレイヤー（MapboxLayer）を削除
-        ['network-link-layer', 'network-node-layer'].forEach(layerId => {
+        ['network-link-layer', 'network-node-layer', 'route-layer', 'space-circle-layer', 'selected-nodes-layer'].forEach(layerId => {
             try {
                 if (map.getLayer(layerId)) {
                     map.removeLayer(layerId);
@@ -246,13 +409,59 @@ async function switchStation(stationId) {
 
         // マップのイベントリスナーを設定
         map.on('click', (e) => {
-            // ノードのクリック検出は無効化し、空間情報のみ表示
+            // ---------------------------------------------------------------
+            // 優先度1: ノードのクリック判定 (deck.gl レイヤー)
+            // ---------------------------------------------------------------
+            // マップに関連付けられたdeck.glインスタンスを取得
+            // MapboxLayerを使用している場合、mapインスタンスに _deck または __deck として保持されています
+            const deckInstance = map.__deck || map._deck;
+
+            if (deckInstance) {
+                // pickObject: 画面上のピクセル座標(x,y)から、そこに描画されているオブジェクトを特定する
+                // 経緯度計算を行わないため、3D表示時の視差ズレが一切発生しません
+                const pickInfo = deckInstance.pickObject({
+                    x: e.point.x,
+                    y: e.point.y,
+                    radius: 5, // クリック判定の許容誤差(ピクセル)
+                    layerIds: ['network-node-layer'] // ノードレイヤーのみを対象にする
+                });
+
+                // ノードがクリックされた場合
+                if (pickInfo && pickInfo.object) {
+                    // 経路検索モードなら選択処理
+                    if (routeSelectionMode) {
+                        handleRouteNodeSelection(pickInfo.object);
+                        return; // 処理完了
+                    }
+
+                    // 通常モードなら情報表示
+                    const coords = pickInfo.coordinate || pickInfo.object.geometry.coordinates;
+                    showNodeInfo(pickInfo.object, coords);
+                    return; // ノードをクリックしたら、後ろの床(Facility)の判定はしない
+                }
+            }
+
+            // ---------------------------------------------------------------
+            // 優先度2: Facility/Spaceのクリック判定 (MapLibre レイヤー)
+            // ---------------------------------------------------------------
+            // ノードがクリックされていない場合のみ実行
+
+            // queryRenderedFeatures: 画面上のピクセル座標からMapLibreレイヤーを特定する
             const features = map.queryRenderedFeatures(e.point, {
                 layers: config.floors.map(f => `space-layer-${f.id}`)
             });
+
             if (features.length > 0) {
-                const f = features[0];
-                const props = f.properties;
+                const spaceFeature = features[0];
+
+                // 経路検索モードの場合
+                if (routeSelectionMode) {
+                    handleRouteFacilitySelection(spaceFeature);
+                    return;
+                }
+
+                // 通常モードの場合 (ポップアップ表示)
+                const props = spaceFeature.properties;
 
                 // categoryコードの意味を取得（specification.md参照）
                 const getCategoryName = (category) => {
@@ -321,7 +530,7 @@ async function switchStation(stationId) {
                     closeButton: true,
                     className: 'space-info-popup'
                 })
-                    .setLngLat(e.lngLat)
+                    .setLngLat(e.lngLat) // Facilityは地面にあるのでlngLatでOK
                     .setHTML(html)
                     .addTo(map);
             }
@@ -353,13 +562,35 @@ async function setupMap() {
     const dataDir = `./data/stations/${currentStation}/`;
 
     // ノードとリンクデータを読み込む
-    const [nodes, linksData] = await Promise.all([
+    const [nodes, links] = await Promise.all([
         fetch(`${dataDir}${config.dataFiles.node}`).then(res => res.json()),
         fetch(`${dataDir}${config.dataFiles.link}`).then(res => res.json())
     ]);
 
     nodesData = nodes;
+    linksData = links;
     nodeFloorMap = {};
+
+    // Facilityデータを読み込む（階層ごと）
+    facilitiesData = {};
+    const facilityPromises = config.floors.map(async f => {
+        const fileName = stationLogic.getSpaceFileName(config.filePrefix, f.id).replace('Space', 'Facility');
+        try {
+            const response = await fetch(`${dataDir}${fileName}`);
+            if (response.ok && response.status === 200) {
+                const data = await response.json();
+                if (data && data.type === 'FeatureCollection') {
+                    facilitiesData[f.id] = data;
+                }
+            }
+        } catch (e) {
+            // Facilityファイルが存在しない場合は無視
+        }
+    });
+    await Promise.all(facilityPromises);
+
+    // グラフを構築
+    routeGraph = buildRouteGraph();
 
     // 一時的にノードのfloorプロパティを使用（後でSpaceレイヤーで再判定）
     nodesData.features.forEach(f => {
@@ -523,10 +754,11 @@ async function setupMap() {
         id: 'network-node-layer',
         type: deck.GeoJsonLayer,
         data: nodesData, // node.geojsonのデータ（235個のノード）
-        pickable: false, // クリック不可
+        pickable: true, // クリック可能（経路検索用）
         getPointRadius: NODE_RADIUS,
-        radiusMinPixels: 3,
-        radiusMaxPixels: 6,
+        // [修正] 当たり判定を大きくして操作性を向上（3D表示での視差を考慮）
+        radiusMinPixels: 6,
+        radiusMaxPixels: 10,
         getFillColor: (d) => {
             // 階層ごとに色を変える（nodeFloorMapで更新された階層を使用）
             // 駅ごとのロジックを使用して色を取得
@@ -552,6 +784,10 @@ async function setupMap() {
                 }
                 const finalZ = z ?? 0;
                 const coords = f.geometry.coordinates; // 元の座標 [lng, lat] または [lng, lat, z]
+                // 元の2D座標を保存（経路検索用）
+                if (!f.properties._originalCoords) {
+                    f.properties._originalCoords = [coords[0], coords[1]];
+                }
                 // 3D座標に変換（元の座標の最初の2要素を使用）
                 f.geometry.coordinates = [coords[0], coords[1], finalZ + NODE_Z_OFFSET];
             });
@@ -624,6 +860,494 @@ async function setupMap() {
     map.addLayer(linkLayer);
     map.addLayer(nodeLayer);
     map.addLayer(spaceCircleLayer);
+
+
+    // 選択されたノードを表示するレイヤー（出発点・到着点）
+    const selectedNodesLayer = new MapboxLayer({
+        id: 'selected-nodes-layer',
+        type: deck.GeoJsonLayer,
+        data: {
+            type: 'FeatureCollection',
+            features: []
+        },
+        pickable: false,
+        getPointRadius: 2,
+        radiusMinPixels: 8,
+        radiusMaxPixels: 12,
+        getFillColor: (d) => {
+            // 出発点は緑、到着点は赤
+            if (d.properties.type === 'start') {
+                return [34, 197, 94, 255]; // 緑
+            } else if (d.properties.type === 'end') {
+                return [239, 68, 68, 255]; // 赤
+            }
+            return [255, 255, 255, 255];
+        },
+        stroked: true,
+        getLineColor: [255, 255, 255, 255],
+        lineWidthMinPixels: 2,
+        lineWidthMaxPixels: 3,
+        parameters: {
+            depthTest: false, // 常に最前面に表示
+            blend: true,
+            blendFunc: [770, 771, 1, 771]
+        },
+        dataTransform: (data) => {
+            data.features.forEach(f => {
+                const nodeId = f.properties.node_id;
+                const node = nodesData.features.find(n => n.properties.node_id === nodeId);
+                if (node) {
+                    const floor = nodeFloorMap[nodeId] ?? node.properties.floor;
+                    const z = config.floorOffsets[String(floor)] ?? 0;
+                    const coords = f.properties._originalCoords ||
+                        (node.geometry.coordinates.length >= 2 ?
+                            [node.geometry.coordinates[0], node.geometry.coordinates[1]] :
+                            node.geometry.coordinates);
+                    f.geometry.coordinates = [coords[0], coords[1], z + NODE_Z_OFFSET + 0.1];
+                }
+            });
+            return data;
+        }
+    });
+    map.addLayer(selectedNodesLayer);
+
+    // 経路検索レイヤーを初期化（空のデータ）
+    const routeLayer = new MapboxLayer({
+        id: 'route-layer',
+        type: deck.GeoJsonLayer,
+        data: {
+            type: 'FeatureCollection',
+            features: []
+        },
+        pickable: false,
+        lineWidthMinPixels: 5,
+        lineWidthMaxPixels: 8,
+        getLineColor: [239, 68, 68, 255], // 赤色
+        parameters: {
+            depthTest: false,
+            blend: true,
+            blendFunc: [770, 771, 1, 771]
+        },
+        dataTransform: (data) => {
+            data.features.forEach(f => {
+                if (f.geometry.type === 'LineString') {
+                    const coords = f.geometry.coordinates;
+                    const startNode = nodesData.features.find(n => n.properties.node_id === f.properties.start_id);
+                    const endNode = nodesData.features.find(n => n.properties.node_id === f.properties.end_id);
+                    if (startNode && endNode) {
+                        const startFloor = nodeFloorMap[startNode.properties.node_id] ?? startNode.properties.floor;
+                        const endFloor = nodeFloorMap[endNode.properties.node_id] ?? endNode.properties.floor;
+                        const startZ = config.floorOffsets[String(startFloor)] ?? 0;
+                        const endZ = config.floorOffsets[String(endFloor)] ?? 0;
+                        f.geometry.coordinates = [
+                            [coords[0][0], coords[0][1], startZ + LINK_Z_OFFSET + 0.2],
+                            [coords[1][0], coords[1][1], endZ + LINK_Z_OFFSET + 0.2]
+                        ];
+                    }
+                }
+            });
+            return data;
+        }
+    });
+    map.addLayer(routeLayer);
+}
+
+// ============================================================================
+// 経路検索機能
+// ============================================================================
+
+/**
+ * ノード選択ハンドラ（経路検索用）
+ */
+function handleRouteNodeSelection(node) {
+    const nodeId = node.properties.node_id;
+    const floor = nodeFloorMap[nodeId] ?? node.properties.floor;
+    const floorName = stationLogic.getFloorName(floor);
+
+    if (routeSelectionMode === 'start') {
+        routeStartNode = nodeId;
+        document.getElementById('start-info').textContent = `Node (${floorName})`;
+        document.getElementById('select-start').classList.remove('active');
+        routeSelectionMode = null;
+    } else if (routeSelectionMode === 'end') {
+        routeEndNode = nodeId;
+        document.getElementById('end-info').textContent = `Node (${floorName})`;
+        document.getElementById('select-end').classList.remove('active');
+        routeSelectionMode = null;
+    }
+
+    updateRouteSearchButton();
+    updateSelectedNodesLayer();
+}
+
+/**
+ * Facility選択ハンドラ（経路検索用）
+ * Spaceレイヤーのfeatureを受け取り、そのSpace内にあるFacilityを探してノードを選択する
+ */
+function handleRouteFacilitySelection(spaceFeature) {
+    // Spaceレイヤーのfeatureから、そのSpace内にあるFacilityを探す
+    const spaceFloorId = spaceFeature.properties.floor_id;
+    const spacePolygon = spaceFeature.geometry.coordinates;
+    let spaceRings = [];
+
+    if (spaceFeature.geometry.type === 'Polygon') {
+        spaceRings = [spacePolygon[0]]; // 最初のリングが外側
+    } else if (spaceFeature.geometry.type === 'MultiPolygon') {
+        spaceRings = spacePolygon.map(poly => poly[0]); // 各ポリゴンの最初のリング
+    }
+
+    // 同じ階層のFacilityを探す
+    let nearestFacility = null;
+    let minFacilityDistance = Infinity;
+
+    for (const floorId in facilitiesData) {
+        facilitiesData[floorId].features.forEach(facility => {
+            // floor_idが一致するFacilityのみチェック
+            if (facility.properties.floor_id === spaceFloorId) {
+                const facilityCoords = facility.geometry.coordinates;
+
+                // FacilityがSpaceポリゴン内にあるかチェック
+                let isInside = false;
+                for (const ring of spaceRings) {
+                    if (pointInPolygon(facilityCoords, ring)) {
+                        isInside = true;
+                        break;
+                    }
+                }
+
+                if (isInside) {
+                    // Spaceの中心からの距離を計算（複数のFacilityがある場合の優先順位付け用）
+                    const spaceCenter = spaceRings[0][0]; // 最初のリングの最初の点を中心として使用
+                    const distance = Math.sqrt(
+                        Math.pow(facilityCoords[0] - spaceCenter[0], 2) +
+                        Math.pow(facilityCoords[1] - spaceCenter[1], 2)
+                    );
+                    if (distance < minFacilityDistance) {
+                        minFacilityDistance = distance;
+                        nearestFacility = facility;
+                    }
+                }
+            }
+        });
+    }
+
+    if (!nearestFacility) {
+        alert('Space内にFacilityが見つかりませんでした');
+        return;
+    }
+
+    // Facilityから最も近いノードを探す
+    const coords = nearestFacility.geometry.coordinates;
+    const nearestNode = findNearestNodeToFacility(coords[0], coords[1]);
+
+    if (!nearestNode) {
+        alert('Facilityに最も近いノードが見つかりませんでした');
+        return;
+    }
+
+    const nodeId = nearestNode.properties.node_id;
+    const floor = nodeFloorMap[nodeId] ?? nearestNode.properties.floor;
+    const floorName = stationLogic.getFloorName(floor);
+    const categoryName = getFacilityCategoryName(nearestFacility.properties.category);
+
+    if (routeSelectionMode === 'start') {
+        routeStartNode = nodeId;
+        document.getElementById('start-info').textContent = `${categoryName} (${floorName})`;
+        document.getElementById('select-start').classList.remove('active');
+        routeSelectionMode = null;
+    } else if (routeSelectionMode === 'end') {
+        routeEndNode = nodeId;
+        document.getElementById('end-info').textContent = `${categoryName} (${floorName})`;
+        document.getElementById('select-end').classList.remove('active');
+        routeSelectionMode = null;
+    }
+
+    updateRouteSearchButton();
+    updateSelectedNodesLayer();
+}
+
+/**
+ * Facilityカテゴリ名を取得
+ */
+function getFacilityCategoryName(category) {
+    const categoryMap = {
+        'F001': 'トイレ（男性）',
+        'F002': 'トイレ（女性）',
+        'F003': 'トイレ（共用）',
+        'F011': '階段',
+        'F012': 'エレベーター',
+        'F013': 'エスカレーター',
+        'F017': '出入口',
+        'F027': 'AED',
+        'F045': '公衆無線LAN'
+    };
+    return categoryMap[category] || category;
+}
+
+/**
+ * 経路検索ボタンの状態を更新
+ */
+function updateRouteSearchButton() {
+    const searchBtn = document.getElementById('search-route');
+    if (routeStartNode && routeEndNode) {
+        searchBtn.disabled = false;
+    } else {
+        searchBtn.disabled = true;
+    }
+}
+
+/**
+ * 選択されたノードレイヤーを更新
+ */
+function updateSelectedNodesLayer() {
+    const selectedFeatures = [];
+
+    if (routeStartNode) {
+        const startNode = nodesData.features.find(n => n.properties.node_id === routeStartNode);
+        if (startNode) {
+            const coords = startNode.properties._originalCoords ||
+                (startNode.geometry.coordinates.length >= 2 ?
+                    [startNode.geometry.coordinates[0], startNode.geometry.coordinates[1]] :
+                    startNode.geometry.coordinates);
+            selectedFeatures.push({
+                type: 'Feature',
+                geometry: {
+                    type: 'Point',
+                    coordinates: coords
+                },
+                properties: {
+                    node_id: routeStartNode,
+                    type: 'start',
+                    _originalCoords: coords
+                }
+            });
+        }
+    }
+
+    if (routeEndNode) {
+        const endNode = nodesData.features.find(n => n.properties.node_id === routeEndNode);
+        if (endNode) {
+            const coords = endNode.properties._originalCoords ||
+                (endNode.geometry.coordinates.length >= 2 ?
+                    [endNode.geometry.coordinates[0], endNode.geometry.coordinates[1]] :
+                    endNode.geometry.coordinates);
+            selectedFeatures.push({
+                type: 'Feature',
+                geometry: {
+                    type: 'Point',
+                    coordinates: coords
+                },
+                properties: {
+                    node_id: routeEndNode,
+                    type: 'end',
+                    _originalCoords: coords
+                }
+            });
+        }
+    }
+
+    const selectedData = {
+        type: 'FeatureCollection',
+        features: selectedFeatures
+    };
+
+    // 選択ノードレイヤーを更新
+    const selectedLayer = map.getLayer('selected-nodes-layer');
+    if (selectedLayer) {
+        map.removeLayer('selected-nodes-layer');
+        const MapboxLayer = deck.MapboxLayer || window.MapboxLayer;
+        const newSelectedLayer = new MapboxLayer({
+            id: 'selected-nodes-layer',
+            type: deck.GeoJsonLayer,
+            data: selectedData,
+            pickable: false,
+            getPointRadius: 2,
+            radiusMinPixels: 8,
+            radiusMaxPixels: 12,
+            getFillColor: (d) => {
+                // 出発点は緑、到着点は赤
+                if (d.properties.type === 'start') {
+                    return [34, 197, 94, 255]; // 緑
+                } else if (d.properties.type === 'end') {
+                    return [239, 68, 68, 255]; // 赤
+                }
+                return [255, 255, 255, 255];
+            },
+            stroked: true,
+            getLineColor: [255, 255, 255, 255],
+            lineWidthMinPixels: 2,
+            lineWidthMaxPixels: 3,
+            parameters: {
+                depthTest: false, // 常に最前面に表示
+                blend: true,
+                blendFunc: [770, 771, 1, 771]
+            },
+            dataTransform: (data) => {
+                data.features.forEach(f => {
+                    const nodeId = f.properties.node_id;
+                    const node = nodesData.features.find(n => n.properties.node_id === nodeId);
+                    if (node) {
+                        const floor = nodeFloorMap[nodeId] ?? node.properties.floor;
+                        const z = config.floorOffsets[String(floor)] ?? 0;
+                        const coords = f.properties._originalCoords ||
+                            (node.geometry.coordinates.length >= 2 ?
+                                [node.geometry.coordinates[0], node.geometry.coordinates[1]] :
+                                node.geometry.coordinates);
+                        f.geometry.coordinates = [coords[0], coords[1], z + NODE_Z_OFFSET + 0.1];
+                    }
+                });
+                return data;
+            }
+        });
+        map.addLayer(newSelectedLayer);
+    }
+}
+
+/**
+ * 経路を描画
+ */
+function drawRoute(path) {
+    if (!path || path.length < 2) {
+        return;
+    }
+
+    const routeFeatures = [];
+    for (let i = 0; i < path.length - 1; i++) {
+        const startNode = nodesData.features.find(n => n.properties.node_id === path[i]);
+        const endNode = nodesData.features.find(n => n.properties.node_id === path[i + 1]);
+
+        if (startNode && endNode) {
+            const startCoords = startNode.geometry.coordinates;
+            const endCoords = endNode.geometry.coordinates;
+
+            routeFeatures.push({
+                type: 'Feature',
+                geometry: {
+                    type: 'LineString',
+                    coordinates: [
+                        [startCoords[0], startCoords[1]],
+                        [endCoords[0], endCoords[1]]
+                    ]
+                },
+                properties: {
+                    start_id: path[i],
+                    end_id: path[i + 1]
+                }
+            });
+        }
+    }
+
+    const routeData = {
+        type: 'FeatureCollection',
+        features: routeFeatures
+    };
+
+    // 経路レイヤーを更新
+    const routeLayer = map.getLayer('route-layer');
+    if (routeLayer) {
+        // MapboxLayerのデータを更新するために、一度削除して再追加
+        map.removeLayer('route-layer');
+        const MapboxLayer = deck.MapboxLayer || window.MapboxLayer;
+        const newRouteLayer = new MapboxLayer({
+            id: 'route-layer',
+            type: deck.GeoJsonLayer,
+            data: routeData,
+            pickable: false,
+            lineWidthMinPixels: 5,
+            lineWidthMaxPixels: 8,
+            getLineColor: [239, 68, 68, 255], // 赤色
+            parameters: {
+                depthTest: false,
+                blend: true,
+                blendFunc: [770, 771, 1, 771]
+            },
+            dataTransform: (data) => {
+                data.features.forEach(f => {
+                    if (f.geometry.type === 'LineString') {
+                        const coords = f.geometry.coordinates;
+                        const startNode = nodesData.features.find(n => n.properties.node_id === f.properties.start_id);
+                        const endNode = nodesData.features.find(n => n.properties.node_id === f.properties.end_id);
+                        if (startNode && endNode) {
+                            const startFloor = nodeFloorMap[startNode.properties.node_id] ?? startNode.properties.floor;
+                            const endFloor = nodeFloorMap[endNode.properties.node_id] ?? endNode.properties.floor;
+                            const startZ = config.floorOffsets[String(startFloor)] ?? 0;
+                            const endZ = config.floorOffsets[String(endFloor)] ?? 0;
+                            f.geometry.coordinates = [
+                                [coords[0][0], coords[0][1], startZ + LINK_Z_OFFSET + 0.2],
+                                [coords[1][0], coords[1][1], endZ + LINK_Z_OFFSET + 0.2]
+                            ];
+                        }
+                    }
+                });
+                return data;
+            }
+        });
+        map.addLayer(newRouteLayer);
+    }
+}
+
+/**
+ * 経路をクリア
+ */
+function clearRoute() {
+    routePath = null;
+    routeStartNode = null;
+    routeEndNode = null;
+    routeSelectionMode = null;
+
+    document.getElementById('start-info').textContent = '未選択';
+    document.getElementById('end-info').textContent = '未選択';
+    document.getElementById('select-start').classList.remove('active');
+    document.getElementById('select-end').classList.remove('active');
+    updateRouteSearchButton();
+    updateSelectedNodesLayer();
+
+    // 経路レイヤーをクリア
+    const routeData = {
+        type: 'FeatureCollection',
+        features: []
+    };
+    const routeLayer = map.getLayer('route-layer');
+    if (routeLayer) {
+        // MapboxLayerのデータを更新するために、一度削除して再追加
+        map.removeLayer('route-layer');
+        const MapboxLayer = deck.MapboxLayer || window.MapboxLayer;
+        const newRouteLayer = new MapboxLayer({
+            id: 'route-layer',
+            type: deck.GeoJsonLayer,
+            data: routeData,
+            pickable: false,
+            lineWidthMinPixels: 5,
+            lineWidthMaxPixels: 8,
+            getLineColor: [239, 68, 68, 255], // 赤色
+            parameters: {
+                depthTest: false,
+                blend: true,
+                blendFunc: [770, 771, 1, 771]
+            },
+            dataTransform: (data) => {
+                data.features.forEach(f => {
+                    if (f.geometry.type === 'LineString') {
+                        const coords = f.geometry.coordinates;
+                        const startNode = nodesData.features.find(n => n.properties.node_id === f.properties.start_id);
+                        const endNode = nodesData.features.find(n => n.properties.node_id === f.properties.end_id);
+                        if (startNode && endNode) {
+                            const startFloor = nodeFloorMap[startNode.properties.node_id] ?? startNode.properties.floor;
+                            const endFloor = nodeFloorMap[endNode.properties.node_id] ?? endNode.properties.floor;
+                            const startZ = config.floorOffsets[String(startFloor)] ?? 0;
+                            const endZ = config.floorOffsets[String(endFloor)] ?? 0;
+                            f.geometry.coordinates = [
+                                [coords[0][0], coords[0][1], startZ + LINK_Z_OFFSET + 0.2],
+                                [coords[1][0], coords[1][1], endZ + LINK_Z_OFFSET + 0.2]
+                            ];
+                        }
+                    }
+                });
+                return data;
+            }
+        });
+        map.addLayer(newRouteLayer);
+    }
 }
 
 // ============================================================================
@@ -706,6 +1430,54 @@ document.addEventListener('DOMContentLoaded', async () => {
     // イベントリスナー
     document.getElementById('station-select').addEventListener('change', (e) => {
         switchStation(e.target.value);
+    });
+
+    // 経路検索UIのイベントハンドラ
+    document.getElementById('select-start').addEventListener('click', () => {
+        if (routeSelectionMode === 'start') {
+            routeSelectionMode = null;
+            document.getElementById('select-start').classList.remove('active');
+        } else {
+            routeSelectionMode = 'start';
+            document.getElementById('select-start').classList.add('active');
+            document.getElementById('select-end').classList.remove('active');
+        }
+    });
+
+    document.getElementById('select-end').addEventListener('click', () => {
+        if (routeSelectionMode === 'end') {
+            routeSelectionMode = null;
+            document.getElementById('select-end').classList.remove('active');
+        } else {
+            routeSelectionMode = 'end';
+            document.getElementById('select-end').classList.add('active');
+            document.getElementById('select-start').classList.remove('active');
+        }
+    });
+
+    document.getElementById('search-route').addEventListener('click', () => {
+        if (!routeStartNode || !routeEndNode || !routeGraph) {
+            alert('出発点と到着点を選択してください');
+            return;
+        }
+
+        if (routeStartNode === routeEndNode) {
+            alert('出発点と到着点が同じです');
+            return;
+        }
+
+        const path = dijkstra(routeGraph, routeStartNode, routeEndNode);
+        if (!path) {
+            alert('経路が見つかりませんでした');
+            return;
+        }
+
+        routePath = path;
+        drawRoute(path);
+    });
+
+    document.getElementById('clear-route').addEventListener('click', () => {
+        clearRoute();
     });
 
     // 利用可能な駅を読み込む
