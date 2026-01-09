@@ -1,0 +1,567 @@
+{
+  "facility": {
+    "F001": {
+      "ja": "トイレ(男性)",
+      "en": "Lavatory(Male)",
+      "definition": "男性用トイレとして利用されている空間（部屋）の代表点"
+    },
+    "F002": {
+      "ja": "トイレ(女性)",
+      "en": "Lavatory(Female)",
+      "definition": "女性用トイレとして利用されている空間（部屋）の代表点"
+    },
+    "F003": {
+      "ja": "トイレ（男女共用）",
+      "en": "Lavatory (Unisex)",
+      "definition": "男女共用トイレとして利用されている空間（部屋）の代表点"
+    },
+    "F004": {
+      "ja": "トイレ（男女不明）",
+      "en": "Lavatory (Unspecified)",
+      "definition": "（男性用/女性用が不明な）トイレとして利用されている空間（部屋）の代表点"
+    },
+    "F005": {
+      "ja": "多機能トイレ（オストメイト対応、おむつ交換シートなし）",
+      "en": "Multipurpose Lavatory",
+      "definition": "多機能トイレ（オストメイトに対応しておらず、おむつ交換シートもないもの）として利用されている空間（部屋）の代表点"
+    },
+    "F006": {
+      "ja": "多機能トイレ（オストメイト対応あり）",
+      "en": "Multipurpose Lavatory (Ostomate)",
+      "definition": "多機能トイレ（オストメイトに対応しているもの）として利用されている空間（部屋）の範囲の代表点"
+    },
+    "F007": {
+      "ja": "多機能トイレ（おむつ交換シートあり）",
+      "en": "Multipurpose Lavatory (Change Diaper)",
+      "definition": "多機能トイレ（おむつ交換シートがあるもの）として利用されている空間（部屋）の範囲の代表点"
+    },
+    "F008": {
+      "ja": "多機能トイレ（オストメイト対応、おむつ交換シートあり）",
+      "en": "Multipurpose Lavatory (Ostomate, Change Diaper)",
+      "definition": "多機能トイレ（オストメイトに対応しており、かつ、おむつ交換シートがあるもの）として利用されている空間（部屋）の範囲の代表点"
+    },
+    "F009": {
+      "ja": "浴室",
+      "en": "Bathroom",
+      "definition": "浴室として利用されている空間（部屋）の代表点"
+    },
+    "F010": {
+      "ja": "更衣室",
+      "en": "Changing Room",
+      "definition": "更衣室として利用されている空間（部屋）の代表点"
+    },
+    "F011": {
+      "ja": "階段",
+      "en": "Stairs",
+      "definition": "建築基準法施行令でいう階段室又は階段の範囲の代表点"
+    },
+    "F012": {
+      "ja": "エレベーター",
+      "en": "Elevator",
+      "definition": "エレベーターの範囲の代表点"
+    },
+    "F013": {
+      "ja": "エスカレーター",
+      "en": "Escalator",
+      "definition": "エスカレーターの範囲の代表点"
+    },
+    "F014": {
+      "ja": "スロープ",
+      "en": "Slope",
+      "definition": "スロープの範囲の代表点"
+    },
+    "F015": {
+      "ja": "動く歩道",
+      "en": "Moving Walkway",
+      "definition": "動く歩道の範囲の代表点"
+    },
+    "F016": {
+      "ja": "施設代表点",
+      "en": "Site",
+      "definition": "施設の代表点"
+    },
+    "F017": {
+      "ja": "施設出入口",
+      "en": "Entrance",
+      "definition": "施設・建物の出入口の代表点"
+    },
+    "F018": {
+      "ja": "受付・案内所",
+      "en": "Information",
+      "definition": "施設案内所、インフォメーションセンター等、有人の案内所の代表点"
+    },
+    "F019": {
+      "ja": "交番",
+      "en": "Policebox",
+      "definition": "交番の代表点"
+    },
+    "F020": {
+      "ja": "待合室",
+      "en": "Waiting Room",
+      "definition": "待合室の代表点"
+    },
+    "F021": {
+      "ja": "授乳室",
+      "en": "Nursing Room",
+      "definition": "授乳室の代表点"
+    },
+    "F022": {
+      "ja": "医療施設",
+      "en": "Medical",
+      "definition": "医療施設の代表点"
+    },
+    "F023": {
+      "ja": "見学・展望施設",
+      "en": "Observation",
+      "definition": "見学・展望施設の代表点"
+    },
+    "F024": {
+      "ja": "喫煙エリア",
+      "en": "Smoking Area",
+      "definition": "喫煙エリア、喫煙室の代表点"
+    },
+    "F025": {
+      "ja": "店舗",
+      "en": "Store",
+      "definition": "飲食店、衣料品店、靴店、サービス業等の各種店舗の代表点"
+    },
+    "F026": {
+      "ja": "飲食コーナー",
+      "en": "Eating/Drinking",
+      "definition": "飲食が可能なコーナーの代表点"
+    },
+    "F027": {
+      "ja": "AED",
+      "en": "AED",
+      "definition": "AED（自動体外式除細動器）の位置"
+    },
+    "F028": {
+      "ja": "公衆電話",
+      "en": "Pay Phone",
+      "definition": "公衆電話の位置"
+    },
+    "F029": {
+      "ja": "郵便ポスト",
+      "en": "Post",
+      "definition": "郵便ポストの位置"
+    },
+    "F030": {
+      "ja": "ATM",
+      "en": "ATM",
+      "definition": "クレジット専用端末を除く、銀行、郵便局等のATMの位置"
+    },
+    "F031": {
+      "ja": "コインロッカー",
+      "en": "Coin Lockers",
+      "definition": "コインロッカーの位置"
+    },
+    "F032": {
+      "ja": "自動販売機",
+      "en": "Vending Machine",
+      "definition": "自動販売機の位置"
+    },
+    "F033": {
+      "ja": "ベンチ",
+      "en": "Bench",
+      "definition": "ベンチの位置"
+    },
+    "F034": {
+      "ja": "ゴミ箱",
+      "en": "Rubbish Bin",
+      "definition": "ゴミ箱の位置"
+    },
+    "F035": {
+      "ja": "階段昇降機／段差解消機",
+      "en": "Stairway Platform Lifts / Vertical Platform",
+      "definition": "車椅子使用者等が階段や段差を移動する際にその移動を支援するための昇降設備の位置（階段昇降機の場合、その起終点の位置）"
+    },
+    "F036": {
+      "ja": "充電ステーション",
+      "en": "Charging Stations",
+      "definition": "電動車いす等の充電ステーションの位置"
+    },
+    "F037": {
+      "ja": "案内サイン／案内板",
+      "en": "Guide Sign",
+      "definition": "案内サイン、駅周辺案内図、施設案内図、触知図案内板、音声案内板等の案内板の位置（広告のみのサイネージは除く）"
+    },
+    "F038": {
+      "ja": "バス停留所",
+      "en": "Busstop",
+      "definition": "バス停留所の位置"
+    },
+    "F039": {
+      "ja": "タクシー乗り場",
+      "en": "Taxistop",
+      "definition": "タクシー乗り場の位置"
+    },
+    "F040": {
+      "ja": "駐輪場",
+      "en": "Bicycle Parking Lot",
+      "definition": "駐輪場エリアの代表点"
+    },
+    "F041": {
+      "ja": "駐車場",
+      "en": "Parking",
+      "definition": "駐車場エリアの代表点"
+    },
+    "F042": {
+      "ja": "地図表記用注記",
+      "en": "Notes for Map Representation",
+      "definition": "広場（有楽町駅前地下広場A、動輪の広場）、通路（行幸ギャラリー）等の名称を地図注記として表現する位置"
+    },
+    "F043": {
+      "ja": "ランドマーク",
+      "en": "Landmark",
+      "definition": "移動や待ち合わせの目印となりうる彫像、模型、現代アート作品等の造形物の位置"
+    },
+    "F044": {
+      "ja": "展示物",
+      "en": "Exhibit",
+      "definition": "（博物館・美術館等における）展示品の位置又は展示エリアの代表点"
+    },
+    "F045": {
+      "ja": "公衆無線LAN",
+      "en": "Public Wi-Fi",
+      "definition": "公衆無線LANスポット（Wi-Fiアクセスポイント）の位置"
+    },
+    "F046": {
+      "ja": "消火器",
+      "en": "Fire Extinguisher",
+      "definition": "消火器の位置"
+    },
+    "F047": {
+      "ja": "消火栓",
+      "en": "Fire Hydrant",
+      "definition": "消火栓の位置"
+    },
+    "F048": {
+      "ja": "火災報知器",
+      "en": "Fire Alarm",
+      "definition": "火災報知器の位置"
+    },
+    "F049": {
+      "ja": "非常誘導灯",
+      "en": "Emergency Guide Light",
+      "definition": "非常誘導灯の位置"
+    },
+    "F050": {
+      "ja": "音による案内設備",
+      "en": "Sound Guidance Facility",
+      "definition": "改札口、コンコースからのエスカレーター、トイレ（鉄軌道駅内）、ホーム上の階段、地下鉄の地上出入口に設置されている音による案内設備の位置"
+    },
+    "F101": {
+      "ja": "きっぷ売り場",
+      "en": "Ticket Office",
+      "definition": "券売機、みどりの窓口等、鉄道をはじめとする公共交通機関のきっぷ及び入場券売り場の代表点"
+    },
+    "F102": {
+      "ja": "定期券売り場",
+      "en": "Commuter Ticket Office",
+      "definition": "公共交通機関の定期券売り場（有人）の代表点"
+    },
+    "F103": {
+      "ja": "精算所",
+      "en": "Fare Adjustment",
+      "definition": "チケット精算所（無人精算機を含む）の代表点"
+    },
+    "F104": {
+      "ja": "駅事務室",
+      "en": "Station Staffroom",
+      "definition": "駅事務室の部屋の代表点"
+    },
+    "F105": {
+      "ja": "忘れもの預かり所",
+      "en": "Lost and Found",
+      "definition": "施設の忘れ物預り所の部屋の代表点"
+    },
+    "F106": {
+      "ja": "改札口",
+      "en": "Ticketgate",
+      "definition": "鉄道駅で改札を行う場所の代表点"
+    },
+    "F107": {
+      "ja": "売店/キオスク",
+      "en": "Kiosk",
+      "definition": "公共的な通路にあるカウンター越しに商品の購入を行う商店の位置"
+    },
+    "F108": {
+      "ja": "出口",
+      "en": "Exit",
+      "definition": "駅／地下鉄の出口の代表点"
+    },
+    "F109": {
+      "ja": "インターホン",
+      "en": "Interphone",
+      "definition": "駅／地下鉄の改札や入口に設置されているインターホンの位置"
+    },
+    "F201": {
+      "ja": "保安検査場",
+      "en": "Inspection Station",
+      "definition": "保安検査場の代表点"
+    },
+    "F202": {
+      "ja": "チェックインカウンター（有人）",
+      "en": "Check-in",
+      "definition": "有人のチェックインカウンターの位置"
+    },
+    "F203": {
+      "ja": "旅券発券/自動チェックイン機（無人）",
+      "en": "Passenger Ticketing/Automated Check-in Kiosk",
+      "definition": "旅券発券/自動チェックイン機の位置"
+    },
+    "F204": {
+      "ja": "手荷物検査場",
+      "en": "Security Checkpoint",
+      "definition": "手荷物検査場の代表点"
+    },
+    "F205": {
+      "ja": "到着口",
+      "en": "Arrival Gate",
+      "definition": "到着口の代表点"
+    },
+    "F206": {
+      "ja": "搭乗口",
+      "en": "Boarding Gate",
+      "definition": "搭乗口の代表点"
+    },
+    "F207": {
+      "ja": "検疫所",
+      "en": "Quarantine Station",
+      "definition": "検疫所の代表点"
+    },
+    "F208": {
+      "ja": "税関",
+      "en": "Customs",
+      "definition": "税関手続きカウンター等の代表点"
+    },
+    "F209": {
+      "ja": "SIM自販機",
+      "en": "SIM Vending Machine",
+      "definition": "SIMの自動販売機の位置"
+    },
+    "F210": {
+      "ja": "Wi-Fiレンタルサービス",
+      "en": "Wi-Fi Rental Service",
+      "definition": "Wi-Fiのレンタルサービスを行っている店舗の代表点"
+    },
+    "F211": {
+      "ja": "携帯電話レンタルサービス",
+      "en": "Mobile Phone Rental Service",
+      "definition": "携帯電話のレンタルサービスを行っている店舗等の代表点"
+    },
+    "F212": {
+      "ja": "ラウンジ",
+      "en": "Private Lounge",
+      "definition": "空港のプライベートラウンジの部屋の代表点"
+    },
+    "F213": {
+      "ja": "マッサージチェア",
+      "en": "Massage Chair",
+      "definition": "マッサージチェアが設置されている位置"
+    },
+    "F214": {
+      "ja": "両替所",
+      "en": "Currency Exchange",
+      "definition": "両替所の代表点"
+    },
+    "F215": {
+      "ja": "手荷物受取場所",
+      "en": "Baggage Claim",
+      "definition": "手荷物受取場所の代表点"
+    },
+    "F216": {
+      "ja": "手荷物カート置き場",
+      "en": "Baggage Carts",
+      "definition": "手荷物カート置き場の代表点"
+    },
+    "F217": {
+      "ja": "手荷物サービス",
+      "en": "Baggage Service",
+      "definition": "手荷物サービスの代表点"
+    },
+    "F218": {
+      "ja": "子供の遊び場",
+      "en": "Children's Play Area",
+      "definition": "子供の遊び場の代表点"
+    },
+    "F219": {
+      "ja": "盲導犬・介助犬許可エリア",
+      "en": "Animal Relief Area",
+      "definition": "盲導犬・介助犬・聴導犬が利用可能な設備の代表点"
+    },
+    "F220": {
+      "ja": "免税店",
+      "en": "Duty Free",
+      "definition": "免税店の範囲の代表点"
+    },
+    "F221": {
+      "ja": "入国審査所",
+      "en": "Immigration",
+      "definition": "入国審査所の代表点"
+    }
+  },
+  "space": {
+    "B001": {
+      "ja": "商業施設",
+      "en": "Retail Store",
+      "definition": "商業施設として利用されている空間（部屋）の範囲"
+    },
+    "B002": {
+      "ja": "事務所",
+      "en": "Office",
+      "definition": "事務室として利用されている空間（部屋）の範囲"
+    },
+    "B003": {
+      "ja": "公的施設",
+      "en": "Public Facility",
+      "definition": "公的施設として利用されている空間（部屋）の範囲"
+    },
+    "B004": {
+      "ja": "待合室・休憩所",
+      "en": "Waiting Room",
+      "definition": "待合所・休憩所として利用されている空間（部屋）の範囲"
+    },
+    "B005": {
+      "ja": "きっぷ売り場",
+      "en": "Tickets",
+      "definition": "きっぷ売り場として利用されている空間（部屋）の範囲"
+    },
+    "B006": {
+      "ja": "受付・案内",
+      "en": "Information",
+      "definition": "受付・案内所として利用されている空間（部屋）の範囲"
+    },
+    "B007": {
+      "ja": "トイレ（男性用）",
+      "en": "Lavatory (Male)",
+      "definition": "トイレ（男性用）として利用されている空間（部屋）の範囲"
+    },
+    "B008": {
+      "ja": "トイレ（女性用）",
+      "en": "Lavatory (Female)",
+      "definition": "トイレ（女性用）として利用されている空間（部屋）の範囲"
+    },
+    "B009": {
+      "ja": "トイレ（男女共用）",
+      "en": "Lavatory (Unisex)",
+      "definition": "トイレ（男女共用）として利用されている空間（部屋）の範囲"
+    },
+    "B010": {
+      "ja": "トイレ（男女不明）",
+      "en": "Lavatory (Unspecified)",
+      "definition": "トイレ（男女不明）として利用されている空間（部屋）の範囲"
+    },
+    "B011": {
+      "ja": "多機能トイレ（オストメイト対応、おむつ交換シートなし）",
+      "en": "Multipurpose Lavatory",
+      "definition": "多機能トイレ（オストメイトに対応しておらず、おむつ交換シートもないもの）として利用されている空間（部屋）の範囲"
+    },
+    "B012": {
+      "ja": "多機能トイレ（オストメイト対応あり）",
+      "en": "Multipurpose Lavatory (Ostomate)",
+      "definition": "多機能トイレ（オストメイトに対応しているもの）として利用されている空間（部屋）の範囲"
+    },
+    "B013": {
+      "ja": "多機能トイレ（おむつ交換シートあり）",
+      "en": "Multipurpose Lavatory (Change Diaper)",
+      "definition": "多機能トイレ（おむつ交換シートがあるもの）として利用されている空間（部屋）の範囲"
+    },
+    "B014": {
+      "ja": "多機能トイレ（オストメイト対応、おむつ交換シートあり）",
+      "en": "Multipurpose Lavatory (Ostomate, Change Diaper)",
+      "definition": "多機能トイレ（オストメイトに対応しており、かつ、おむつ交換シートがあるもの）として利用されている空間（部屋）の範囲"
+    },
+    "B015": {
+      "ja": "喫煙場所",
+      "en": "Smoking Area",
+      "definition": "喫煙場所として利用されている空間（部屋）の範囲"
+    },
+    "B016": {
+      "ja": "授乳室",
+      "en": "Baby-feeding Room, Nursing Room",
+      "definition": "授乳室として利用されている空間（部屋）の範囲"
+    },
+    "B017": {
+      "ja": "病院・救護室",
+      "en": "First Aid",
+      "definition": "病院・救護室等医療関係の施設として利用されている空間（部屋）の範囲"
+    },
+    "B018": {
+      "ja": "駅事務室",
+      "en": "Station Office",
+      "definition": "駅事務室として利用されている空間（部屋）の範囲"
+    },
+    "B019": {
+      "ja": "その他部屋の範囲",
+      "en": "Other Room",
+      "definition": "上記部屋として分類不能な空間（部屋）の範囲"
+    },
+    "B020": {
+      "ja": "吹抜の範囲",
+      "en": "Open to Below",
+      "definition": "人の通行が不能な吹き抜けがある空間の範囲"
+    },
+    "B021": {
+      "ja": "階段の範囲",
+      "en": "Stairs",
+      "definition": "踊り場を含む階段がある空間の範囲"
+    },
+    "B022": {
+      "ja": "エレベーターの範囲",
+      "en": "Elevator",
+      "definition": "エレベーターがある空間の範囲（概ねエレベータシャフト（開口部）と同様の範囲）"
+    },
+    "B023": {
+      "ja": "エスカレーターの範囲",
+      "en": "Escalator",
+      "definition": "踊り場を含むエスカレーターがある空間の範囲（ランディングプレートを含む）"
+    },
+    "B024": {
+      "ja": "動く歩道の範囲",
+      "en": "Moving Walkway",
+      "definition": "動く歩道がある空間の範囲（ランディングプレートを含む）"
+    },
+    "B025": {
+      "ja": "スロープの範囲",
+      "en": "Slope",
+      "definition": "スロープがある空間の範囲"
+    },
+    "B026": {
+      "ja": "非公開の範囲",
+      "en": "Non-Public",
+      "definition": "施設管理者により非公開と指定された空間（部屋）の範囲"
+    },
+    "B027": {
+      "ja": "駐車場",
+      "en": "Parking",
+      "definition": "駐車場として利用されている空間（部屋）の範囲"
+    },
+    "B028": {
+      "ja": "プラットホーム",
+      "en": "Platform",
+      "definition": "プラットホームの範囲"
+    },
+    "B029": {
+      "ja": "通路/コンコース",
+      "en": "Walkway",
+      "definition": "通路/コンコースとして利用されている空間（部屋）の範囲"
+    },
+    "B030": {
+      "ja": "ペデストリアンデッキ",
+      "en": "Pedestriandeck",
+      "definition": "ペデストリアンデッキ（建物と接続して建設された歩行者の通行専用の高架建築物）の範囲"
+    },
+    "B031": {
+      "ja": "歩道橋",
+      "en": "Pedestrian Overpass",
+      "definition": "歩道橋の範囲"
+    },
+    "B999": {
+      "ja": "屋外",
+      "en": "Outside",
+      "definition": "建物の外の地表面（グランドレベル）の範囲"
+    }
+  }
+}
+
