@@ -105,6 +105,9 @@ function showFacilityList() {
 
     content.innerHTML = html;
 
+    // スクロール位置を一番上にリセット
+    content.scrollTop = 0;
+
     // クリックイベントを設定
     content.querySelectorAll('.facility-list-item').forEach(item => {
         item.addEventListener('click', () => {

@@ -51,11 +51,10 @@ async function switchStation(stationId) {
 
     currentStation = stationId;
 
-    // 設備一覧パネルを閉じる
+    // 設備一覧パネルが開いているかチェック（表示されているかどうか）
     const facilityListPanel = document.getElementById('facility-list-panel');
-    if (facilityListPanel) {
-        facilityListPanel.style.display = 'none';
-    }
+    const wasFacilityListOpen = facilityListPanel && 
+        window.getComputedStyle(facilityListPanel).display !== 'none';
 
     // 既存のレイヤーとソースを削除
     if (map) {
@@ -172,6 +171,10 @@ async function switchStation(stationId) {
         map.setPitch(config.pitch);
         map.setBearing(config.bearing);
         await setupMap();
+        // 設備一覧パネルが開いていた場合は再表示（スクロール位置もリセットされる）
+        if (wasFacilityListOpen && typeof showFacilityList === 'function') {
+            showFacilityList();
+        }
     } else {
         // 新規にマップを作成
         map = new maplibregl.Map({
@@ -291,7 +294,13 @@ async function switchStation(stationId) {
         });
 
         // 新規マップの場合はloadイベントを待つ
-        map.on('load', () => setupMap());
+        map.on('load', async () => {
+            await setupMap();
+            // 設備一覧パネルが開いていた場合は再表示（スクロール位置もリセットされる）
+            if (wasFacilityListOpen && typeof showFacilityList === 'function') {
+                showFacilityList();
+            }
+        });
     }
 }
 
