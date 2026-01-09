@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>駅3Dネットワーク・スケルトン (Hybrid版 高コントラストVer)</title>
+    <title>駅3Dネットワーク</title>
     <!-- MapLibre GL JS -->
     <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
@@ -31,6 +31,13 @@
     <script src="./js/stations/ueno_okachimachi.js"></script>
 
     <!-- メインJavaScript -->
+    <script src="./js/constants.js"></script>
+    <script src="./js/utils.js"></script>
+    <script src="./js/route.js"></script>
+    <script src="./js/station.js"></script>
+    <script src="./js/map.js"></script>
+    <script src="./js/facility.js"></script>
+    <script src="./js/info.js"></script>
     <script src="./js/main.js"></script>
 </head>
 
@@ -38,7 +45,7 @@
 
     <div id="map"></div>
     <div class="info-panel">
-        <b style="font-size: 1.2em; display: block; margin-bottom: 5px; color: #fff;" id="station-name">駅 3Dスケルトン</b>
+        <b style="font-size: 1.2em; display: block; margin-bottom: 5px; color: #fff;" id="station-name">駅 3Dネットワーク</b>
         ・フロア (Space): 階層別に色分け描画<br>
         ・経路 (Link): シアン色で3D接続<br>
         ・節点 (Node): 階層別に色分け<br>
