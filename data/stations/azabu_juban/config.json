@@ -1,0 +1,37 @@
+{
+  "stationName": "麻布十番駅",
+  "center": [139.7362, 35.6564],
+  "zoom": 18.5,
+  "pitch": 65,
+  "bearing": -20,
+  "floorOffsets": {
+    "-1": 50,
+    "-2": 40,
+    "-3": 30,
+    "-4": 20,
+    "-5": 10,
+    "-6": 0
+  },
+  "floors": [
+    { "id": "B1", "offset": 50, "nodeFloor": -1 },
+    { "id": "B2", "offset": 40, "nodeFloor": -2 },
+    { "id": "B3", "offset": 30, "nodeFloor": -3 },
+    { "id": "B4", "offset": 20, "nodeFloor": -4 },
+    { "id": "B5", "offset": 10, "nodeFloor": -5 },
+    { "id": "B6", "offset": 0, "nodeFloor": -6 }
+  ],
+  "floorColors": {
+    "B1": "#38bdf8",
+    "B2": "#34d399",
+    "B3": "#a855f7",
+    "B4": "#f59e0b",
+    "B5": "#ec4899",
+    "B6": "#fb7185"
+  },
+  "filePrefix": "Azabu-juban",
+  "dataFiles": {
+    "node": "node.geojson",
+    "link": "link.geojson"
+  }
+}
+

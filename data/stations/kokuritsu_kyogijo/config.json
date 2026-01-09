@@ -1,0 +1,34 @@
+{
+  "stationName": "国立競技場駅",
+  "center": [139.7140, 35.6801],
+  "zoom": 18.5,
+  "pitch": 65,
+  "bearing": -20,
+  "floorOffsets": {
+    "1": 60,
+    "-0.5": 50,
+    "-1": 40,
+    "-2": 25,
+    "-3": 10
+  },
+  "floors": [
+    { "id": "1", "offset": 60, "nodeFloor": 1 },
+    { "id": "B0.5", "offset": 50, "nodeFloor": -0.5 },
+    { "id": "B1", "offset": 40, "nodeFloor": -1 },
+    { "id": "B2", "offset": 25, "nodeFloor": -2 },
+    { "id": "B3", "offset": 10, "nodeFloor": -3 }
+  ],
+  "floorColors": {
+    "1": "#fb7185",
+    "B0.5": "#fbbf24",
+    "B1": "#38bdf8",
+    "B2": "#34d399",
+    "B3": "#a855f7"
+  },
+  "filePrefix": "Kokuritsu-kyogijo",
+  "dataFiles": {
+    "node": "node.geojson",
+    "link": "link.geojson"
+  }
+}
+

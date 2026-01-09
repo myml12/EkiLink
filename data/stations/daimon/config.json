@@ -1,0 +1,34 @@
+{
+  "stationName": "大門駅",
+  "center": [139.7555, 35.6568],
+  "zoom": 18.5,
+  "pitch": 65,
+  "bearing": -20,
+  "floorOffsets": {
+    "-1": 50,
+    "-2": 40,
+    "-3": 30,
+    "-4": 20,
+    "-5": 10
+  },
+  "floors": [
+    { "id": "B1", "offset": 50, "nodeFloor": -1 },
+    { "id": "B2", "offset": 40, "nodeFloor": -2 },
+    { "id": "B3", "offset": 30, "nodeFloor": -3 },
+    { "id": "B4", "offset": 20, "nodeFloor": -4 },
+    { "id": "B5", "offset": 10, "nodeFloor": -5 }
+  ],
+  "floorColors": {
+    "B1": "#38bdf8",
+    "B2": "#34d399",
+    "B3": "#a855f7",
+    "B4": "#f59e0b",
+    "B5": "#ec4899"
+  },
+  "filePrefix": "Daimon",
+  "dataFiles": {
+    "node": "node.geojson",
+    "link": "link.geojson"
+  }
+}
+

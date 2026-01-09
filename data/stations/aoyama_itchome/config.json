@@ -1,0 +1,34 @@
+{
+  "stationName": "青山一丁目駅",
+  "center": [139.7241, 35.6729],
+  "zoom": 18.5,
+  "pitch": 65,
+  "bearing": -20,
+  "floorOffsets": {
+    "1": 60,
+    "-1": 45,
+    "-3": 20,
+    "-4": 10,
+    "-5": 0
+  },
+  "floors": [
+    { "id": "1", "offset": 60, "nodeFloor": 1 },
+    { "id": "B1", "offset": 45, "nodeFloor": -1 },
+    { "id": "B3", "offset": 20, "nodeFloor": -3 },
+    { "id": "B4", "offset": 10, "nodeFloor": -4 },
+    { "id": "B5", "offset": 0, "nodeFloor": -5 }
+  ],
+  "floorColors": {
+    "1": "#fb7185",
+    "B1": "#38bdf8",
+    "B3": "#a855f7",
+    "B4": "#f59e0b",
+    "B5": "#ec4899"
+  },
+  "filePrefix": "Aoyama-itchome",
+  "dataFiles": {
+    "node": "node.geojson",
+    "link": "link.geojson"
+  }
+}
+

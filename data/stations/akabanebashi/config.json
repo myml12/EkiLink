@@ -1,0 +1,28 @@
+{
+  "stationName": "赤羽橋駅",
+  "center": [139.7441, 35.6551],
+  "zoom": 18.5,
+  "pitch": 65,
+  "bearing": -20,
+  "floorOffsets": {
+    "0": 45,
+    "-0.5": 40,
+    "-1": 30,
+    "-1.5": 22.5,
+    "-2": 15
+  },
+  "floors": [
+    { "id": "B1", "offset": 30, "nodeFloor": -1 },
+    { "id": "B2", "offset": 15, "nodeFloor": -2 }
+  ],
+  "floorColors": {
+    "B1": "#38bdf8",
+    "B2": "#34d399"
+  },
+  "filePrefix": "Akabanebashi",
+  "dataFiles": {
+    "node": "node.geojson",
+    "link": "link.geojson"
+  }
+}
+

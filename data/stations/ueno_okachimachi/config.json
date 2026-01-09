@@ -1,0 +1,28 @@
+{
+  "stationName": "上野御徒町駅",
+  "center": [139.7744, 35.7078],
+  "zoom": 18.5,
+  "pitch": 65,
+  "bearing": -20,
+  "floorOffsets": {
+    "-0.5": 40,
+    "-1": 30,
+    "-2": 15
+  },
+  "floors": [
+    { "id": "B0.5", "offset": 40, "nodeFloor": -0.5 },
+    { "id": "B1", "offset": 30, "nodeFloor": -1 },
+    { "id": "B2", "offset": 15, "nodeFloor": -2 }
+  ],
+  "floorColors": {
+    "B0.5": "#fbbf24",
+    "B1": "#38bdf8",
+    "B2": "#34d399"
+  },
+  "filePrefix": "Ueno-okachimachi",
+  "dataFiles": {
+    "node": "node.geojson",
+    "link": "link.geojson"
+  }
+}
+

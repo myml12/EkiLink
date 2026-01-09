@@ -16,6 +16,16 @@
     <!-- 駅ごとのJavaScriptファイル -->
     <script src="./js/stations/shinjuku.js"></script>
     <script src="./js/stations/yoyogi.js"></script>
+    <script src="./js/stations/akabanebashi.js"></script>
+    <script src="./js/stations/aoyama_itchome.js"></script>
+    <script src="./js/stations/azabu_juban.js"></script>
+    <script src="./js/stations/daimon.js"></script>
+    <script src="./js/stations/higaashi_shinjuku.js"></script>
+    <script src="./js/stations/kokuritsu_kyogijo.js"></script>
+    <script src="./js/stations/roppongi.js"></script>
+    <script src="./js/stations/shinjuku_nishiguchi.js"></script>
+    <script src="./js/stations/tochomae.js"></script>
+    <script src="./js/stations/ueno_okachimachi.js"></script>
 
     <style>
         body {
@@ -209,7 +219,11 @@
             try {
                 // stationsディレクトリ内の各ディレクトリをチェック
                 // 新しい駅を追加する場合は、このリストに駅IDを追加してください
-                const stationsList = ['shinjuku', 'yoyogi'];
+                const stationsList = [
+                    'shinjuku', 'yoyogi', 'akabanebashi', 'aoyama_itchome',
+                    'azabu_juban', 'daimon', 'higaashi_shinjuku', 'kokuritsu_kyogijo',
+                    'roppongi', 'shinjuku_nishiguchi', 'tochomae', 'ueno_okachimachi'
+                ];
                 const select = document.getElementById('station-select');
                 select.innerHTML = '';
 
@@ -301,6 +315,36 @@
                     break;
                 case 'yoyogi':
                     stationLogic = YoyogiStation;
+                    break;
+                case 'akabanebashi':
+                    stationLogic = AkabanebashiStation;
+                    break;
+                case 'aoyama_itchome':
+                    stationLogic = AoyamaItchomeStation;
+                    break;
+                case 'azabu_juban':
+                    stationLogic = AzabuJubanStation;
+                    break;
+                case 'daimon':
+                    stationLogic = DaimonStation;
+                    break;
+                case 'higaashi_shinjuku':
+                    stationLogic = HigashiShinjukuStation;
+                    break;
+                case 'kokuritsu_kyogijo':
+                    stationLogic = KokuritsuKyogijoStation;
+                    break;
+                case 'roppongi':
+                    stationLogic = RoppongiStation;
+                    break;
+                case 'shinjuku_nishiguchi':
+                    stationLogic = ShinjukuNishiguchiStation;
+                    break;
+                case 'tochomae':
+                    stationLogic = TochomaeStation;
+                    break;
+                case 'ueno_okachimachi':
+                    stationLogic = UenoOkachimachiStation;
                     break;
                 default:
                     // デフォルトは新宿駅のロジックを使用（後方互換性）
