@@ -435,7 +435,7 @@ async function setupMap() {
             features: []
         },
         pickable: false,
-        getPointRadius: 2,
+        getPointRadius: 1.5,
         radiusMinPixels: 8,
         radiusMaxPixels: 12,
         getFillColor: (d) => {

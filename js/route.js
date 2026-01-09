@@ -298,14 +298,16 @@ function updateSelectedNodesLayer() {
             type: deck.GeoJsonLayer,
             data: selectedData,
             pickable: false,
-            getPointRadius: 2,
+            getPointRadius: 1.5,
             radiusMinPixels: 8,
             radiusMaxPixels: 12,
             getFillColor: (d) => {
                 // 出発点は緑、到着点は赤
                 if (d.properties.type === 'start') {
+                    console.log('start');
                     return [34, 197, 94, 255]; // 緑
                 } else if (d.properties.type === 'end') {
+                    console.log('end');
                     return [239, 68, 68, 255]; // 赤
                 }
                 return [255, 255, 255, 255];
