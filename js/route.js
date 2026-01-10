@@ -243,6 +243,12 @@ function performRouteSearch() {
 
     // 経路検索完了のトーストを表示
     showToast('経路検索完了');
+
+    // 再生ボタンを表示
+    const playBtn = document.getElementById('play-route-animation');
+    if (playBtn) {
+        playBtn.style.display = 'flex';
+    }
 }
 
 /**
@@ -461,6 +467,12 @@ function clearRoute() {
     document.getElementById('select-start').classList.remove('active');
     document.getElementById('select-end').classList.remove('active');
     updateSelectedNodesLayer();
+
+    // 再生ボタンを非表示
+    const playBtn = document.getElementById('play-route-animation');
+    if (playBtn) {
+        playBtn.style.display = 'none';
+    }
 
     // 経路レイヤーをクリア
     const routeData = {

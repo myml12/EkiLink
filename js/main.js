@@ -113,6 +113,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         clearRoute();
     });
 
+    // 経路アニメーション再生ボタンのイベントリスナー
+    document.getElementById('play-route-animation').addEventListener('click', () => {
+        playRouteAnimation();
+    });
+
     // 利用可能な駅を読み込む
     await loadAvailableStations();
 
