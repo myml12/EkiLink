@@ -213,7 +213,7 @@ function focusOnFacility(facilityId, floorId) {
     const currentBearing = map.getBearing();
 
     // ズームレベルを適切に設定
-    const targetZoom = 18.5;
+    const targetZoom = 18.0;
 
     // 3. ピッチと高さに基づいて、ターゲット中心をどれだけずらすか(メートル)計算
     //    カメラが地面(Z=0)を見ている時、高さHの物体を中央にするには、
@@ -254,6 +254,41 @@ function focusOnFacility(facilityId, floorId) {
         duration: 1500,
         essential: true
     });
+
+    // 設備選択時: 同じフロアで最も近いノードを到着地としてセット
+    const nearestNode = findNearestNodeOnSameFloor(lng, lat, floorId);
+    if (nearestNode) {
+        const nodeId = nearestNode.properties.node_id;
+        const nodeFloor = nodeFloorMap[nodeId] ?? nearestNode.properties.floor;
+        const floorName = stationLogic.getFloorName(nodeFloor);
+        const categoryName = getFacilityCategoryName(facility.properties.category);
+
+        // 到着地ノードをセット
+        routeEndNode = nodeId;
+        document.getElementById('end-info').textContent = `${categoryName} (${floorName})`;
+
+        // 出発地選択モードにする
+        routeSelectionMode = 'start';
+        document.getElementById('select-start').classList.add('active');
+        document.getElementById('select-end').classList.remove('active');
+
+        // トーストを表示
+        showToast('現在地を選択してください');
+
+        // 選択ノードレイヤーを更新
+        updateSelectedNodesLayer();
+
+        // 出発と到着が両方選択されている場合は自動的に経路検索を実行
+        updateRouteSearchButton();
+
+        // 設備一覧パネルを閉じる
+        const facilityListPanel = document.getElementById('facility-list-panel');
+        if (facilityListPanel) {
+            facilityListPanel.style.display = 'none';
+        }
+    } else {
+        console.warn('設備と同じフロアのノードが見つかりませんでした');
+    }
 }
 
 /**

@@ -66,6 +66,43 @@ function findNearestNodeToFacility(facilityLng, facilityLat, tolerance = 0.001) 
 }
 
 /**
+ * Facilityから同じフロアで最も近いNodeを見つける
+ */
+function findNearestNodeOnSameFloor(facilityLng, facilityLat, facilityFloorId, tolerance = 0.001) {
+    if (!nodesData) return null;
+    let nearestNode = null;
+    let minDistance = Infinity;
+
+    nodesData.features.forEach(node => {
+        // ノードのフロアを取得
+        const nodeFloor = nodeFloorMap[node.properties.node_id] ?? node.properties.floor;
+
+        // 設備のフロアIDからnodeFloorを取得
+        const floorConfig = config.floors.find(f => f.id === facilityFloorId);
+        if (!floorConfig) return;
+
+        const facilityNodeFloor = floorConfig.nodeFloor;
+
+        // 同じフロアのノードのみを対象にする
+        if (nodeFloor !== facilityNodeFloor) return;
+
+        const coords = node.properties._originalCoords ||
+            (node.geometry.coordinates.length >= 2 ?
+                [node.geometry.coordinates[0], node.geometry.coordinates[1]] :
+                node.geometry.coordinates);
+        const distance = Math.sqrt(
+            Math.pow(coords[0] - facilityLng, 2) + Math.pow(coords[1] - facilityLat, 2)
+        );
+        if (distance < minDistance && distance < tolerance) {
+            minDistance = distance;
+            nearestNode = node;
+        }
+    });
+
+    return nearestNode;
+}
+
+/**
  * 2点間の距離を計算（メートル単位の概算）
  */
 function calculateDistance(lng1, lat1, lng2, lat2) {
@@ -77,5 +114,22 @@ function calculateDistance(lng1, lat1, lng2, lat2) {
         Math.sin(dLng / 2) * Math.sin(dLng / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
+}
+
+/**
+ * トースト通知を表示
+ */
+function showToast(message, duration = 3000) {
+    const toast = document.getElementById('toast');
+    const toastMessage = toast.querySelector('.toast-message');
+
+    if (!toast || !toastMessage) return;
+
+    toastMessage.textContent = message;
+    toast.classList.add('show');
+
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, duration);
 }
 

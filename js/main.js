@@ -109,27 +109,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    document.getElementById('search-route').addEventListener('click', () => {
-        if (!routeStartNode || !routeEndNode || !routeGraph) {
-            alert('出発点と到着点を選択してください');
-            return;
-        }
-
-        if (routeStartNode === routeEndNode) {
-            alert('出発点と到着点が同じです');
-            return;
-        }
-
-        const path = dijkstra(routeGraph, routeStartNode, routeEndNode);
-        if (!path) {
-            alert('経路が見つかりませんでした');
-            return;
-        }
-
-        routePath = path;
-        drawRoute(path);
-    });
-
     document.getElementById('clear-route').addEventListener('click', () => {
         clearRoute();
     });

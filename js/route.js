@@ -131,8 +131,8 @@ function handleRouteNodeSelection(node) {
         routeSelectionMode = null;
     }
 
-    updateRouteSearchButton();
     updateSelectedNodesLayer();
+    updateRouteSearchButton();
 }
 
 /**
@@ -217,19 +217,41 @@ function handleRouteFacilitySelection(spaceFeature) {
         routeSelectionMode = null;
     }
 
-    updateRouteSearchButton();
     updateSelectedNodesLayer();
+    updateRouteSearchButton();
 }
 
 /**
- * 経路検索ボタンの状態を更新
+ * 経路検索を実行する関数
+ */
+function performRouteSearch() {
+    if (!routeStartNode || !routeEndNode || !routeGraph) {
+        return;
+    }
+
+    if (routeStartNode === routeEndNode) {
+        return;
+    }
+
+    const path = dijkstra(routeGraph, routeStartNode, routeEndNode);
+    if (!path) {
+        return;
+    }
+
+    routePath = path;
+    drawRoute(path);
+
+    // 経路検索完了のトーストを表示
+    showToast('経路検索完了');
+}
+
+/**
+ * 経路検索ボタンの状態を更新（廃止されたが、互換性のため残す）
  */
 function updateRouteSearchButton() {
-    const searchBtn = document.getElementById('search-route');
-    if (routeStartNode && routeEndNode) {
-        searchBtn.disabled = false;
-    } else {
-        searchBtn.disabled = true;
+    // 出発と到着が両方選択されている場合は自動的に経路検索を実行
+    if (routeStartNode && routeEndNode && routeGraph) {
+        performRouteSearch();
     }
 }
 
@@ -438,7 +460,6 @@ function clearRoute() {
     document.getElementById('end-info').textContent = '未選択';
     document.getElementById('select-start').classList.remove('active');
     document.getElementById('select-end').classList.remove('active');
-    updateRouteSearchButton();
     updateSelectedNodesLayer();
 
     // 経路レイヤーをクリア

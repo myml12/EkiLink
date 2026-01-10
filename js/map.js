@@ -65,7 +65,12 @@ async function setupMap() {
     await Promise.all(facilityPromises);
 
     // グラフを構築
-    routeGraph = buildRouteGraph();
+    if (typeof buildRouteGraph === 'function') {
+        routeGraph = buildRouteGraph();
+    } else {
+        console.error('buildRouteGraph関数が見つかりません。route.jsが正しく読み込まれているか確認してください。');
+        routeGraph = {};
+    }
 
     // 一時的にノードのfloorプロパティを使用（後でSpaceレイヤーで再判定）
     nodesData.features.forEach(f => {

@@ -45,11 +45,11 @@
 
     <div id="map"></div>
     <div class="info-panel">
-        <b style="font-size: 1.2em; display: block; margin-bottom: 5px; color: #fff;" id="station-name">駅 3Dネットワーク</b>
-        ・フロア (Space): 階層別に色分け描画<br>
+        <b style="font-size: 1.0em; display: block; margin-bottom: 5px; color: #fff;">大江戸線</b><b style="font-size: 1.2em; display: block; margin-bottom: 5px; color: #fff;" id="station-name">駅 経路検索アプリ</b>
+        <!-- ・フロア (Space): 階層別に色分け描画<br>
         ・経路 (Link): シアン色で3D接続<br>
-        ・節点 (Node): 階層別に色分け<br>
-        <div class="legend-item">
+        ・節点 (Node): 階層別に色分け<br> -->
+        <!-- <div class="legend-item">
             <div class="line" style="background: #00ffff; color: #00ffff;"></div> 経路: Link (3D接続)
         </div>
         <div class="legend-item">
@@ -63,7 +63,7 @@
         <div class="legend-item">
             <div class="line" style="background: #ef4444; color: #ef4444;"></div> 検索経路: 最短経路
         </div>
-        <small style="opacity: 0.6; display: block; margin-top: 10px; color: #94a3b8;">右ドラッグで回転、Ctrl+ドラッグで高度変更</small>
+        <small style="opacity: 0.6; display: block; margin-top: 10px; color: #94a3b8;">右ドラッグで回転、Ctrl+ドラッグで高度変更</small> -->
     </div>
 
     <div class="station-selector">
@@ -91,7 +91,6 @@
             </div>
         </div>
         <div class="route-actions">
-            <button id="search-route" class="route-btn-primary" disabled>経路検索</button>
             <button id="clear-route" class="route-btn-secondary">クリア</button>
         </div>
     </div>
@@ -116,6 +115,11 @@
 
     <!-- 設備一覧ボタン -->
     <button id="toggle-facility-list" class="facility-list-toggle">設備一覧</button>
+
+    <!-- トースト通知 -->
+    <div id="toast" class="toast">
+        <div class="toast-message"></div>
+    </div>
 
 </body>
 

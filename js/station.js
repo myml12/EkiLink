@@ -53,7 +53,7 @@ async function switchStation(stationId) {
 
     // 設備一覧パネルが開いているかチェック（表示されているかどうか）
     const facilityListPanel = document.getElementById('facility-list-panel');
-    const wasFacilityListOpen = facilityListPanel && 
+    const wasFacilityListOpen = facilityListPanel &&
         window.getComputedStyle(facilityListPanel).display !== 'none';
 
     // 既存のレイヤーとソースを削除
@@ -160,8 +160,8 @@ async function switchStation(stationId) {
     }
 
     // タイトルを更新
-    document.getElementById('station-name').textContent = `${config.stationName} 3Dネットワーク`;
-    document.title = `${config.stationName} 3Dネットワーク`;
+    document.getElementById('station-name').textContent = `${config.stationName} 経路検索アプリ`;
+    document.title = `${config.stationName} 経路検索アプリ`;
 
     // マップを再初期化
     if (map) {
@@ -275,21 +275,41 @@ async function switchStation(stationId) {
             // 優先度3: Spaceのクリック判定 (MapLibre レイヤー)
             // ---------------------------------------------------------------
             // queryRenderedFeatures: 画面上のピクセル座標からMapLibreレイヤーを特定する
-            const features = map.queryRenderedFeatures(e.point, {
-                layers: config.floors.map(f => `space-layer-${f.id}`)
-            });
+            try {
+                // 存在するレイヤーのみをフィルタリング
+                const availableLayers = config.floors
+                    .map(f => `space-layer-${f.id}`)
+                    .filter(layerId => {
+                        try {
+                            return map.getLayer(layerId) !== undefined;
+                        } catch (e) {
+                            return false;
+                        }
+                    });
 
-            if (features.length > 0) {
-                const spaceFeature = features[0];
-
-                // 経路検索モードの場合
-                if (routeSelectionMode) {
-                    handleRouteFacilitySelection(spaceFeature);
-                    return;
+                if (availableLayers.length === 0) {
+                    return; // レイヤーが存在しない場合は何もしない
                 }
 
-                // 通常モードの場合 (右下に小さく軽めに表示)
-                showSpaceInfo(spaceFeature.properties);
+                const features = map.queryRenderedFeatures(e.point, {
+                    layers: availableLayers
+                });
+
+                if (features.length > 0) {
+                    const spaceFeature = features[0];
+
+                    // 経路検索モードの場合
+                    if (routeSelectionMode) {
+                        handleRouteFacilitySelection(spaceFeature);
+                        return;
+                    }
+
+                    // 通常モードの場合 (右下に小さく軽めに表示)
+                    showSpaceInfo(spaceFeature.properties);
+                }
+            } catch (err) {
+                // レイヤーが存在しない場合はエラーを無視
+                console.debug('Spaceレイヤーのクエリエラー（無視）:', err);
             }
         });
 
