@@ -519,31 +519,5 @@ async function setupMap() {
         }
     });
     map.addLayer(routeLayer);
-
-    // ハイライトされた設備を表示するレイヤー（初期化時は空、赤丸で囲う）
-    highlightedFacilityLayer = new MapboxLayer({
-        id: 'highlighted-facility-layer',
-        type: deck.GeoJsonLayer,
-        data: {
-            type: 'FeatureCollection',
-            features: []
-        },
-        pickable: false,
-        getPointRadius: 3.0, // 設備の点より大きい半径
-        radiusMinPixels: 10, // 拡大縮小してもサイズが変わらないように固定
-        radiusMaxPixels: 10,
-        getFillColor: [0, 0, 0, 0], // 塗りつぶしなし（透明）
-        stroked: true,
-        getLineColor: [239, 68, 68, 255], // 赤色
-        lineWidthMinPixels: 3, // 太い赤い枠線
-        lineWidthMaxPixels: 3,
-        parameters: {
-            depthTest: false, // 常に最前面に表示
-            depthFunc: 519,
-            blend: true,
-            blendFunc: [770, 771, 1, 771]
-        }
-    });
-    map.addLayer(highlightedFacilityLayer);
 }
 

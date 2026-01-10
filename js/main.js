@@ -23,8 +23,6 @@ let routePath = null; // 検索された経路（ノードIDの配列）
 let routeSelectionMode = null; // 'start' | 'end' | null
 let routeLayer = null; // 経路表示レイヤー
 let selectedNodesLayer = null; // 選択されたノード表示レイヤー
-let highlightedFacilityLayer = null; // ハイライトされた設備表示レイヤー
-let highlightedFacility = null; // 現在ハイライトされている設備
 
 // ============================================================================
 // 初期化
@@ -34,7 +32,6 @@ let highlightedFacility = null; // 現在ハイライトされている設備
 function setupFacilityListToggle() {
     const toggleBtn = document.getElementById('toggle-facility-list');
     const closeBtn = document.getElementById('close-facility-list');
-    const clearBtn = document.getElementById('clear-facility-highlight');
     const panel = document.getElementById('facility-list-panel');
 
     if (toggleBtn) {
@@ -52,13 +49,6 @@ function setupFacilityListToggle() {
             if (panel) {
                 panel.style.display = 'none';
             }
-        });
-    }
-
-    if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-            clearFacilityHighlight();
-            clearBtn.style.display = 'none';
         });
     }
 }

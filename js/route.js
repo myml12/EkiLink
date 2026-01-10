@@ -340,7 +340,10 @@ function updateSelectedNodesLayer() {
                 }
                 return [255, 255, 255, 255];
             },
-            stroked: true,
+            stroked: (d) => {
+                // 出発点のみ枠線を表示、到着点は枠線なし（外側の赤丸を削除）
+                return d.properties.type === 'start';
+            },
             getLineColor: [255, 255, 255, 255],
             lineWidthMinPixels: 2,
             lineWidthMaxPixels: 3,

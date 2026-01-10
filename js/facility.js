@@ -240,9 +240,6 @@ function focusOnFacility(facilityId, floorId) {
 
     // ----------------------------------------------------------------
 
-    // ハイライト表示
-    highlightFacility(facility, facilityFloor, floorId);
-
     console.log(`設備フォーカス: 元座標[${lng}, ${lat}] -> 補正座標[${targetLng}, ${targetLat}] (高度:${objectHeight}m)`);
 
     // マップ移動（補正後の座標を中心にする）
@@ -288,124 +285,6 @@ function focusOnFacility(facilityId, floorId) {
         }
     } else {
         console.warn('設備と同じフロアのノードが見つかりませんでした');
-    }
-}
-
-/**
- * 設備をハイライト表示する関数
- */
-function highlightFacility(facility, facilityFloor, floorId) {
-    if (!map) {
-        console.warn('highlightFacility: マップが初期化されていません');
-        return;
-    }
-
-    highlightedFacility = facility;
-
-    const z = config.floorOffsets[String(facilityFloor)] ?? 0;
-    const coords = facility.geometry.coordinates;
-
-    const highlightedFeature = {
-        type: 'Feature',
-        geometry: {
-            type: 'Point',
-            coordinates: [coords[0], coords[1], z + SPACE_HEIGHT + 0.5]
-        },
-        properties: {
-            ...facility.properties
-        }
-    };
-
-    console.log('ハイライト表示:', highlightedFeature);
-
-    // 既存のレイヤーを削除
-    const currentLayer = map.getLayer('highlighted-facility-layer');
-    if (currentLayer) {
-        map.removeLayer('highlighted-facility-layer');
-    }
-
-    // 新しいハイライトレイヤーを作成（赤丸で囲う）
-    const MapboxLayer = deck.MapboxLayer || window.MapboxLayer;
-    const newHighlightedLayer = new MapboxLayer({
-        id: 'highlighted-facility-layer',
-        type: deck.GeoJsonLayer,
-        data: {
-            type: 'FeatureCollection',
-            features: [highlightedFeature]
-        },
-        pickable: false,
-        getPointRadius: 3.0, // 設備の点より大きい半径
-        radiusMinPixels: 10, // 拡大縮小してもサイズが変わらないように固定
-        radiusMaxPixels: 10,
-        getFillColor: [0, 0, 0, 0], // 塗りつぶしなし（透明）
-        stroked: true,
-        getLineColor: [239, 68, 68, 255], // 赤色
-        lineWidthMinPixels: 3, // 太い赤い枠線
-        lineWidthMaxPixels: 3,
-        parameters: {
-            depthTest: false, // 常に最前面に表示
-            depthFunc: 519,
-            blend: true,
-            blendFunc: [770, 771, 1, 771]
-        }
-    });
-
-    map.addLayer(newHighlightedLayer);
-    highlightedFacilityLayer = newHighlightedLayer;
-
-    // クリアボタンを表示
-    const clearBtn = document.getElementById('clear-facility-highlight');
-    if (clearBtn) {
-        clearBtn.style.display = 'block';
-    }
-
-    console.log('ハイライトレイヤーを追加しました');
-}
-
-/**
- * 設備のハイライトをクリアする関数
- */
-function clearFacilityHighlight() {
-    if (!map) return;
-
-    const currentLayer = map.getLayer('highlighted-facility-layer');
-    if (currentLayer) {
-        map.removeLayer('highlighted-facility-layer');
-    }
-
-    // レイヤーを再作成（空のデータで）
-    const MapboxLayer = deck.MapboxLayer || window.MapboxLayer;
-    highlightedFacilityLayer = new MapboxLayer({
-        id: 'highlighted-facility-layer',
-        type: deck.GeoJsonLayer,
-        data: {
-            type: 'FeatureCollection',
-            features: []
-        },
-        pickable: false,
-        getPointRadius: 3.0,
-        radiusMinPixels: 10,
-        radiusMaxPixels: 10,
-        getFillColor: [0, 0, 0, 0],
-        stroked: true,
-        getLineColor: [239, 68, 68, 255],
-        lineWidthMinPixels: 3,
-        lineWidthMaxPixels: 3,
-        parameters: {
-            depthTest: false,
-            depthFunc: 519,
-            blend: true,
-            blendFunc: [770, 771, 1, 771]
-        }
-    });
-    map.addLayer(highlightedFacilityLayer);
-
-    highlightedFacility = null;
-
-    // クリアボタンを非表示
-    const clearBtn = document.getElementById('clear-facility-highlight');
-    if (clearBtn) {
-        clearBtn.style.display = 'none';
     }
 }
 

@@ -60,11 +60,9 @@ async function switchStation(stationId) {
     if (map) {
         // 経路をクリア
         clearRoute();
-        // 設備のハイライトをクリア
-        clearFacilityHighlight();
 
         // deck.glレイヤー（MapboxLayer）を削除
-        ['network-link-layer', 'network-node-layer', 'route-layer', 'space-circle-layer', 'selected-nodes-layer', 'facility-layer', 'highlighted-facility-layer'].forEach(layerId => {
+        ['network-link-layer', 'network-node-layer', 'route-layer', 'space-circle-layer', 'selected-nodes-layer', 'facility-layer'].forEach(layerId => {
             try {
                 if (map.getLayer(layerId)) {
                     map.removeLayer(layerId);
