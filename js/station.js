@@ -159,7 +159,7 @@ async function switchStation(stationId) {
 
     // タイトルを更新
     document.getElementById('station-name').textContent = `${config.stationName} 経路検索アプリ`;
-    document.title = `${config.stationName} 経路検索アプリ`;
+    document.title = 'EkiLink';
 
     // マップを再初期化
     if (map) {
