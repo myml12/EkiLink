@@ -123,7 +123,7 @@ async function setupMap() {
                 ],
                 'fill-extrusion-base': f.offset,
                 'fill-extrusion-height': f.offset + SPACE_HEIGHT,
-                'fill-extrusion-opacity': 0.25
+                'fill-extrusion-opacity': 0.35
             }
         });
 
