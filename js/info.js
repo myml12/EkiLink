@@ -3,9 +3,11 @@
 // ============================================================================
 
 // スペースハイライトの表示設定
-const SPACE_HIGHLIGHT_COLOR = '#38bdf8';  // スカイブルー
-const SPACE_HIGHLIGHT_WIDTH = 3;           // 枠線の幅（px）
-const SPACE_HIGHLIGHT_OPACITY = 0.9;       // 不透明度
+const SPACE_HIGHLIGHT_COLOR = '#38bdf8';      // Sky blue
+const SPACE_HIGHLIGHT_WIDTH = 3;              // Border width (px)
+const SPACE_HIGHLIGHT_OPACITY = 0.9;          // Opacity
+const SPACE_HIGHLIGHT_SOURCE_ID = 'space-highlight-source';
+const SPACE_HIGHLIGHT_LAYER_ID = 'space-highlight-layer';
 
 /**
  * Space情報を右下に表示する関数
@@ -87,30 +89,34 @@ function highlightSpaceFeature(feature) {
     // 既存のハイライトを削除
     removeSpaceHighlight();
 
-    // ハイライト用のソースとレイヤーを追加
-    const highlightSourceId = 'space-highlight-source';
-    const highlightLayerId = 'space-highlight-layer';
-
-    // 新しいソースを追加
-    map.addSource(highlightSourceId, {
-        type: 'geojson',
-        data: {
-            type: 'FeatureCollection',
-            features: [feature]
+    try {
+        // 新しいソースを追加
+        if (!map.getSource(SPACE_HIGHLIGHT_SOURCE_ID)) {
+            map.addSource(SPACE_HIGHLIGHT_SOURCE_ID, {
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: [feature]
+                }
+            });
         }
-    });
 
-    // ハイライトレイヤーを追加（枠線のみ）
-    map.addLayer({
-        id: highlightLayerId,
-        type: 'line',
-        source: highlightSourceId,
-        paint: {
-            'line-color': SPACE_HIGHLIGHT_COLOR,
-            'line-width': SPACE_HIGHLIGHT_WIDTH,
-            'line-opacity': SPACE_HIGHLIGHT_OPACITY
+        // ハイライトレイヤーを追加（枠線のみ）
+        if (!map.getLayer(SPACE_HIGHLIGHT_LAYER_ID)) {
+            map.addLayer({
+                id: SPACE_HIGHLIGHT_LAYER_ID,
+                type: 'line',
+                source: SPACE_HIGHLIGHT_SOURCE_ID,
+                paint: {
+                    'line-color': SPACE_HIGHLIGHT_COLOR,
+                    'line-width': SPACE_HIGHLIGHT_WIDTH,
+                    'line-opacity': SPACE_HIGHLIGHT_OPACITY
+                }
+            });
         }
-    });
+    } catch (error) {
+        console.warn('スペースハイライトの追加に失敗しました:', error);
+    }
 }
 
 /**
@@ -119,15 +125,16 @@ function highlightSpaceFeature(feature) {
 function removeSpaceHighlight() {
     if (!map) return;
 
-    const highlightSourceId = 'space-highlight-source';
-    const highlightLayerId = 'space-highlight-layer';
-
-    // レイヤーとソースを削除
-    if (map.getLayer(highlightLayerId)) {
-        map.removeLayer(highlightLayerId);
-    }
-    if (map.getSource(highlightSourceId)) {
-        map.removeSource(highlightSourceId);
+    try {
+        // レイヤーとソースを削除
+        if (map.getLayer(SPACE_HIGHLIGHT_LAYER_ID)) {
+            map.removeLayer(SPACE_HIGHLIGHT_LAYER_ID);
+        }
+        if (map.getSource(SPACE_HIGHLIGHT_SOURCE_ID)) {
+            map.removeSource(SPACE_HIGHLIGHT_SOURCE_ID);
+        }
+    } catch (error) {
+        console.warn('スペースハイライトの削除に失敗しました:', error);
     }
 }
 
