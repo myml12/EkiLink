@@ -91,6 +91,7 @@ function calculateDirection(fromLng, fromLat, toLng, toLat) {
     const dLat = toLat - fromLat;
     
     // 角度を計算（北を0度として時計回り）
+    // Math.atan2(y, x)の形式で、地理座標では(dLng, dLat)を使用
     let angle = Math.atan2(dLng, dLat) * 180 / Math.PI;
     if (angle < 0) angle += 360;
     
@@ -104,7 +105,8 @@ function calculateDirection(fromLng, fromLat, toLng, toLat) {
     if (angle >= 247.5 && angle < 292.5) return '西';
     if (angle >= 292.5 && angle < 337.5) return '北西';
     
-    return '直進';
+    // すべての角度はカバーされているが、念のため
+    return '北';
 }
 
 /**
@@ -158,6 +160,11 @@ function findNearestFacilityToNode(nodeId, maxDistance = 20) {
             if (facilityFloorNum !== nodeFloor) return;
 
             const facilityCoords = facility.geometry.coordinates;
+            // calculateDistanceはutils.jsで定義されている
+            if (typeof calculateDistance !== 'function') {
+                console.warn('calculateDistance関数が利用できません');
+                return;
+            }
             const distance = calculateDistance(
                 nodeCoords[0], nodeCoords[1],
                 facilityCoords[0], facilityCoords[1]
@@ -165,8 +172,12 @@ function findNearestFacilityToNode(nodeId, maxDistance = 20) {
 
             if (distance < minDistance) {
                 minDistance = distance;
+                // getFacilityCategoryNameはfacility.jsで定義されている
+                const categoryName = typeof getFacilityCategoryName === 'function' 
+                    ? getFacilityCategoryName(facility.properties.category)
+                    : `施設 ${facility.properties.category}`;
                 nearestFacility = {
-                    category: getFacilityCategoryName(facility.properties.category),
+                    category: categoryName,
                     name: facility.properties.name || '',
                     distance: distance,
                     icon: getFacilityIcon(facility.properties.category)
