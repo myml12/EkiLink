@@ -182,16 +182,12 @@ function showAllFloors() {
     // 全てのSpaceレイヤーを表示し、3D表示に戻す
     config.floors.forEach(f => {
         const layerId = `space-layer-${f.id}`;
-        const outlineId = `space-outline-${f.id}`;
         
         if (map.getLayer(layerId)) {
             map.setLayoutProperty(layerId, 'visibility', 'visible');
             // 3D表示に戻す
             map.setPaintProperty(layerId, 'fill-extrusion-base', f.offset);
             map.setPaintProperty(layerId, 'fill-extrusion-height', f.offset + SPACE_HEIGHT);
-        }
-        if (map.getLayer(outlineId)) {
-            map.setLayoutProperty(outlineId, 'visibility', 'visible');
         }
     });
     
@@ -210,7 +206,6 @@ function showSingleFloor(floor, floorId) {
     // 選択された階層のSpaceレイヤーのみ表示し、フラットに表示
     config.floors.forEach(f => {
         const layerId = `space-layer-${f.id}`;
-        const outlineId = `space-outline-${f.id}`;
         const isSelected = f.nodeFloor === floor;
         
         if (map.getLayer(layerId)) {
@@ -220,9 +215,6 @@ function showSingleFloor(floor, floorId) {
                 map.setPaintProperty(layerId, 'fill-extrusion-base', FLOOR_PLAN_EXTRUSION_BASE);
                 map.setPaintProperty(layerId, 'fill-extrusion-height', FLOOR_PLAN_EXTRUSION_HEIGHT);
             }
-        }
-        if (map.getLayer(outlineId)) {
-            map.setLayoutProperty(outlineId, 'visibility', isSelected ? 'visible' : 'none');
         }
     });
     

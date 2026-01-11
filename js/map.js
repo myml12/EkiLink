@@ -112,6 +112,7 @@ async function setupMap() {
         map.addSource(`space-src-${f.id}`, { type: 'geojson', data: data });
         
         // 施設境界をより明確にするため、fill-extrusionの枠線効果を改善
+        // fill-extrusionの垂直エッジが各階層の高さで自動的にレンダリングされる
         map.addLayer({
             id: `space-layer-${f.id}`,
             type: 'fill-extrusion',
@@ -129,26 +130,9 @@ async function setupMap() {
                 ],
                 'fill-extrusion-base': f.offset,
                 'fill-extrusion-height': f.offset + SPACE_HEIGHT,
-                'fill-extrusion-opacity': 0.45 // 不透明度を上げて境界を明確に
-            }
-        });
-
-        // 施設境界線レイヤーを追加（境界をより明確にする）
-        map.addLayer({
-            id: `space-outline-${f.id}`,
-            type: 'line',
-            source: `space-src-${f.id}`,
-            paint: {
-                'line-color': [
-                    'match', ['get', 'category'],
-                    'B021', '#ff6b35', // 階段
-                    'B019', '#0ea5e9', // 通路
-                    'B028', '#f59e0b', // プラットホーム
-                    'B029', '#3b82f6', // 通路/コンコース
-                    '#64748b' // デフォルト
-                ],
-                'line-width': 1.5,
-                'line-opacity': 0.7
+                'fill-extrusion-opacity': 0.45, // 不透明度を上げて境界を明確に
+                // 垂直エッジの色を設定（各階層の高さに応じて自動的に表示される）
+                'fill-extrusion-vertical-gradient': false // グラデーションを無効にして境界を明確に
             }
         });
 
