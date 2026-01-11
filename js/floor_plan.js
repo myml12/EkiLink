@@ -188,6 +188,7 @@ function showAllFloors() {
             // 3D表示に戻す
             map.setPaintProperty(layerId, 'fill-extrusion-base', f.offset);
             map.setPaintProperty(layerId, 'fill-extrusion-height', f.offset + SPACE_HEIGHT);
+            map.setPaintProperty(layerId, 'fill-extrusion-opacity', 0.45); // 通常の不透明度に戻す
         }
     });
     
@@ -203,17 +204,25 @@ function showAllFloors() {
 function showSingleFloor(floor, floorId) {
     if (!map || !config) return;
     
-    // 選択された階層のSpaceレイヤーのみ表示し、フラットに表示
+    // 全ての階層のSpaceレイヤーを表示するが、選択された階層以外は薄く表示
     config.floors.forEach(f => {
         const layerId = `space-layer-${f.id}`;
         const isSelected = f.nodeFloor === floor;
         
         if (map.getLayer(layerId)) {
-            map.setLayoutProperty(layerId, 'visibility', isSelected ? 'visible' : 'none');
+            // 全ての階層を表示
+            map.setLayoutProperty(layerId, 'visibility', 'visible');
+            
             if (isSelected) {
-                // フロアプランビューではフラットに表示
+                // 選択された階層はフラットに表示（通常の不透明度）
                 map.setPaintProperty(layerId, 'fill-extrusion-base', FLOOR_PLAN_EXTRUSION_BASE);
                 map.setPaintProperty(layerId, 'fill-extrusion-height', FLOOR_PLAN_EXTRUSION_HEIGHT);
+                map.setPaintProperty(layerId, 'fill-extrusion-opacity', 0.45); // 通常の不透明度
+            } else {
+                // 選択されていない階層は薄く表示（枠線のみ見える程度）
+                map.setPaintProperty(layerId, 'fill-extrusion-base', FLOOR_PLAN_EXTRUSION_BASE);
+                map.setPaintProperty(layerId, 'fill-extrusion-height', FLOOR_PLAN_EXTRUSION_HEIGHT);
+                map.setPaintProperty(layerId, 'fill-extrusion-opacity', 0.15); // 薄く表示
             }
         }
     });
