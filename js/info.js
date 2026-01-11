@@ -129,6 +129,15 @@ function highlightSpaceFeature(feature) {
             );
         }
 
+        // レイヤーが既に存在する場合は削除（確実に削除するため）
+        if (map.getLayer(SPACE_HIGHLIGHT_LAYER_ID)) {
+            try {
+                map.removeLayer(SPACE_HIGHLIGHT_LAYER_ID);
+            } catch (e) {
+                console.warn('既存のハイライトレイヤー削除エラー:', e);
+            }
+        }
+
         // deck.glのGeoJsonLayerを使用（3D座標をサポート）
         const highlightLayer = new MapboxLayer({
             id: SPACE_HIGHLIGHT_LAYER_ID,
@@ -153,8 +162,9 @@ function highlightSpaceFeature(feature) {
         });
 
         map.addLayer(highlightLayer);
+        console.log('ハイライトレイヤーを追加しました:', SPACE_HIGHLIGHT_LAYER_ID);
     } catch (error) {
-        console.warn('スペースハイライトの追加に失敗しました:', error);
+        console.error('スペースハイライトの追加に失敗しました:', error);
     }
 }
 
@@ -187,9 +197,10 @@ function removeSpaceHighlight() {
         // deck.glレイヤーを削除
         if (map.getLayer(SPACE_HIGHLIGHT_LAYER_ID)) {
             map.removeLayer(SPACE_HIGHLIGHT_LAYER_ID);
+            console.log('ハイライトレイヤーを削除しました:', SPACE_HIGHLIGHT_LAYER_ID);
         }
     } catch (error) {
-        console.warn('スペースハイライトの削除に失敗しました:', error);
+        console.error('スペースハイライトの削除に失敗しました:', error);
     }
 }
 
