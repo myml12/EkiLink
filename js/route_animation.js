@@ -8,7 +8,8 @@ let animationState = {
     animationId: null,
     startTime: null,
     routeCoords: [],
-    currentSegmentIndex: 0
+    currentSegmentIndex: 0,
+    currentAnimationFloor: null // 現在アニメーション中の階層を追跡
 };
 
 /**
@@ -57,8 +58,12 @@ function playRouteAnimation() {
         startTime: null,
         routeCoords: routeCoords,
         currentSegmentIndex: 0,
-        duration: 3000 // 全体で3秒
+        duration: 3000, // 全体で3秒
+        currentAnimationFloor: routeCoords[0].floor // 最初の階層で初期化
     };
+
+    // 最初の階層で透明度を設定
+    updateLayerOpacityForAnimation(routeCoords[0].floor);
 
     // アニメーションポイントレイヤーを追加
     addAnimationPointLayer();
@@ -153,6 +158,12 @@ function animatePoint() {
     const floor = startCoord.floor;
     const z = config.floorOffsets[String(floor)] ?? 0;
 
+    // 階層が変わった場合のみレイヤーの透明度を更新（パフォーマンス最適化）
+    if (animationState.currentAnimationFloor !== floor) {
+        animationState.currentAnimationFloor = floor;
+        updateLayerOpacityForAnimation(floor);
+    }
+
     // ポイントレイヤーを更新
     const pointData = {
         type: 'FeatureCollection',
@@ -167,9 +178,6 @@ function animatePoint() {
             }
         }]
     };
-
-    // 他の階層のノードとラインの透明度を下げる
-    updateLayerOpacityForAnimation(floor);
 
     // レイヤーを更新
     if (map.getLayer('animation-point-layer')) {
