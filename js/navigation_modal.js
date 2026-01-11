@@ -87,13 +87,19 @@ function generateNavigationSteps(path) {
  * 方向を計算（8方向）
  */
 function calculateDirection(fromLng, fromLat, toLng, toLat) {
-    const dLng = toLng - fromLng;
-    const dLat = toLat - fromLat;
+    // Haversine方位角の計算（route_animation.jsと同じアルゴリズム）
+    const lat1 = fromLat * Math.PI / 180;
+    const lat2 = toLat * Math.PI / 180;
+    const dLng = (toLng - fromLng) * Math.PI / 180;
     
-    // 角度を計算（北を0度として時計回り）
-    // Math.atan2(y, x)の形式で、地理座標では(dLng, dLat)を使用
-    let angle = Math.atan2(dLng, dLat) * 180 / Math.PI;
-    if (angle < 0) angle += 360;
+    // 方位角を計算
+    const y = Math.sin(dLng) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) -
+              Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+    let angle = Math.atan2(y, x) * 180 / Math.PI;
+    
+    // 0-360度に正規化
+    angle = (angle + 360) % 360;
     
     // 8方向に分類
     if (angle >= 337.5 || angle < 22.5) return '北';
@@ -134,6 +140,12 @@ function findNearestFacilityToNode(nodeId, maxDistance = 20) {
     const node = nodesData.features.find(n => n.properties.node_id === nodeId);
     if (!node || !facilitiesData) return null;
 
+    // 依存関数の存在確認（一度だけチェック）
+    if (typeof calculateDistance !== 'function') {
+        console.warn('calculateDistance関数が利用できません');
+        return null;
+    }
+
     const nodeFloor = nodeFloorMap[nodeId] ?? node.properties.floor;
     const nodeCoords = node.geometry.coordinates;
 
@@ -160,11 +172,6 @@ function findNearestFacilityToNode(nodeId, maxDistance = 20) {
             if (facilityFloorNum !== nodeFloor) return;
 
             const facilityCoords = facility.geometry.coordinates;
-            // calculateDistanceはutils.jsで定義されている
-            if (typeof calculateDistance !== 'function') {
-                console.warn('calculateDistance関数が利用できません');
-                return;
-            }
             const distance = calculateDistance(
                 nodeCoords[0], nodeCoords[1],
                 facilityCoords[0], facilityCoords[1]
