@@ -74,7 +74,22 @@ function playRouteAnimation() {
     // カメラ位置を補正する関数（ピッチとbearingに基づく）
     function adjustCameraPosition(lng, lat, objectHeight, pitch, bearing) {
         // NaNチェック：無効な値の場合は補正なしの座標を返す
-        if (isNaN(lng) || isNaN(lat) || isNaN(objectHeight) || isNaN(pitch) || isNaN(bearing)) {
+        // ただし、lngとlatがNaNの場合は元の座標も無効なので、そのままでは使えない
+        if (isNaN(bearing) || isNaN(pitch) || isNaN(objectHeight)) {
+            // bearing等が無効な場合は補正なしで返す（lng, latは有効と仮定）
+            return { lng: lng, lat: lat };
+        }
+        
+        // 座標の有効性チェック
+        if (isNaN(lng) || isNaN(lat)) {
+            console.warn('adjustCameraPosition: 無効な座標が渡されました', lng, lat);
+            return { lng: 0, lat: 0 }; // フォールバック座標
+        }
+        
+        // 極点近くのチェック（Math.cos(lat)がほぼ0になるのを防ぐ）
+        const latCos = Math.cos(lat * Math.PI / 180);
+        if (Math.abs(latCos) < 0.000001) {
+            // 極点付近では補正なしで座標を返す
             return { lng: lng, lat: lat };
         }
         
@@ -85,7 +100,7 @@ function playRouteAnimation() {
         const R = 6378137; // 地球の半径（メートル）
         
         const dLat = (offsetDistance * Math.cos(bearingRad)) / R * (180 / Math.PI);
-        const dLng = (offsetDistance * Math.sin(bearingRad)) / (R * Math.cos(lat * Math.PI / 180)) * (180 / Math.PI);
+        const dLng = (offsetDistance * Math.sin(bearingRad)) / (R * latCos) * (180 / Math.PI);
         
         return {
             lng: lng + dLng,
@@ -110,7 +125,7 @@ function playRouteAnimation() {
     
     // 座標が同一の場合（NaN対策）は現在のbearingを使用、またはデフォルト値(0度=北)を使用
     if (isNaN(firstBearing)) {
-        firstBearing = map.getBearing() || 0;
+        firstBearing = (map.getBearing() !== null && map.getBearing() !== undefined) ? map.getBearing() : 0;
     }
     
     // 最初のノードの補正座標を計算
@@ -154,13 +169,15 @@ function playRouteAnimation() {
             );
             // 座標が同一の場合（NaN対策）は前回のbearingを維持
             if (isNaN(calculatedBearing)) {
-                nextBearing = map.getBearing();
+                const currentBearing = map.getBearing();
+                nextBearing = (currentBearing !== null && currentBearing !== undefined) ? currentBearing : 0;
             } else {
                 nextBearing = calculatedBearing;
             }
         } else {
             // 最後のノードの場合は、前回のbearingを維持
-            nextBearing = map.getBearing();
+            const currentBearing = map.getBearing();
+            nextBearing = (currentBearing !== null && currentBearing !== undefined) ? currentBearing : 0;
         }
         
         // 現在のノードの補正座標を計算
