@@ -2,11 +2,15 @@
 // 情報表示機能
 // ============================================================================
 
+// 現在ハイライト表示されているスペースの情報を保持
+let highlightedSpaceFeature = null;
+
 /**
  * Space情報を右下に表示する関数
  * @param {Object} props - Spaceのproperties
+ * @param {Object} feature - SpaceのGeoJSON feature（ハイライト表示用）
  */
-function showSpaceInfo(props) {
+function showSpaceInfo(props, feature = null) {
     const panel = document.getElementById('space-info-panel');
     const content = document.getElementById('space-info-content');
 
@@ -41,6 +45,11 @@ function showSpaceInfo(props) {
 
     content.innerHTML = html;
 
+    // ハイライト表示を追加
+    if (feature) {
+        highlightSpaceFeature(feature);
+    }
+
     // 既存のタイマーをクリア
     if (showSpaceInfo.timeoutId) {
         clearTimeout(showSpaceInfo.timeoutId);
@@ -60,8 +69,77 @@ function showSpaceInfo(props) {
         panel.classList.remove('show');
         setTimeout(() => {
             panel.style.display = 'none';
+            // ハイライトも削除
+            removeSpaceHighlight();
         }, 300);
     }, 3000);
+}
+
+/**
+ * スペースをハイライト表示する関数
+ * @param {Object} feature - SpaceのGeoJSON feature
+ */
+function highlightSpaceFeature(feature) {
+    if (!map) return;
+
+    // 既存のハイライトを削除
+    removeSpaceHighlight();
+
+    // 新しいハイライトを保存
+    highlightedSpaceFeature = feature;
+
+    // ハイライト用のソースとレイヤーを追加
+    const highlightSourceId = 'space-highlight-source';
+    const highlightLayerId = 'space-highlight-layer';
+
+    // ソースが既に存在する場合は削除
+    if (map.getSource(highlightSourceId)) {
+        if (map.getLayer(highlightLayerId)) {
+            map.removeLayer(highlightLayerId);
+        }
+        map.removeSource(highlightSourceId);
+    }
+
+    // 新しいソースを追加
+    map.addSource(highlightSourceId, {
+        type: 'geojson',
+        data: {
+            type: 'FeatureCollection',
+            features: [feature]
+        }
+    });
+
+    // ハイライトレイヤーを追加（枠線のみ）
+    map.addLayer({
+        id: highlightLayerId,
+        type: 'line',
+        source: highlightSourceId,
+        paint: {
+            'line-color': '#38bdf8', // スカイブルー
+            'line-width': 3,
+            'line-opacity': 0.9
+        }
+    });
+}
+
+/**
+ * スペースのハイライトを削除する関数
+ */
+function removeSpaceHighlight() {
+    if (!map) return;
+
+    const highlightSourceId = 'space-highlight-source';
+    const highlightLayerId = 'space-highlight-layer';
+
+    // レイヤーとソースを削除
+    if (map.getLayer(highlightLayerId)) {
+        map.removeLayer(highlightLayerId);
+    }
+    if (map.getSource(highlightSourceId)) {
+        map.removeSource(highlightSourceId);
+    }
+
+    highlightedSpaceFeature = null;
 }
 
 /**
