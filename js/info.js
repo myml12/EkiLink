@@ -8,11 +8,12 @@ const SPACE_HIGHLIGHT_WIDTH = 3;              // Border width (px)
 const SPACE_HIGHLIGHT_OPACITY = 0.9;          // Opacity
 const SPACE_HIGHLIGHT_SOURCE_ID = 'space-highlight-source';
 const SPACE_HIGHLIGHT_LAYER_ID = 'space-highlight-layer';
+const SPACE_INFO_DISPLAY_DURATION = 3000;     // Display duration (ms)
 
 /**
  * Space情報を右下に表示する関数
  * @param {Object} props - Spaceのproperties
- * @param {Object} feature - SpaceのGeoJSON feature（ハイライト表示用）
+ * @param {Object} [feature=null] - SpaceのGeoJSON feature（ハイライト表示用、省略時はハイライト無効）
  */
 function showSpaceInfo(props, feature = null) {
     const panel = document.getElementById('space-info-panel');
@@ -68,7 +69,7 @@ function showSpaceInfo(props, feature = null) {
         });
     });
 
-    // 3秒後に自動的に非表示
+    // 指定時間後に自動的に非表示
     showSpaceInfo.timeoutId = setTimeout(() => {
         panel.classList.remove('show');
         setTimeout(() => {
@@ -76,7 +77,7 @@ function showSpaceInfo(props, feature = null) {
             // ハイライトも削除
             removeSpaceHighlight();
         }, 300);
-    }, 3000);
+    }, SPACE_INFO_DISPLAY_DURATION);
 }
 
 /**
