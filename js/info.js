@@ -35,7 +35,7 @@ function showSpaceInfo(props) {
     }
 
     // 名称は空白でない場合のみ表示
-    if (props.name && props.name.trim() !== '' && props.name.trim() !== ' ') {
+    if (props.name && props.name.trim() !== '') {
         html += `<div class="space-name">${props.name.trim()}</div>`;
     }
 
@@ -116,7 +116,7 @@ function showFacilityInfo(feature, lngLat) {
     }
 
     // 改札口や出口の番号を抽出
-    const name = props.name && props.name.trim() !== '' && props.name.trim() !== ' ' ? props.name.trim() : null;
+    const name = props.name && props.name.trim() !== '' ? props.name.trim() : null;
     const number = extractFacilityNumber(name, props.category);
 
     let html = '<div class="space-popup">';
@@ -177,7 +177,7 @@ function showNodeInfo(feature, lngLat) {
     let linkCount = 0;
     for (let i = 1; i <= 8; i++) {
         const linkId = props[`link${i}_id`];
-        if (linkId && linkId.trim() !== '' && linkId.trim() !== ' ') {
+        if (linkId && linkId.trim() !== '') {
             linkCount++;
         }
     }

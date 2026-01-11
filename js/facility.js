@@ -31,7 +31,7 @@ function getFacilityCategoryName(category) {
  * @returns {string|null} - 番号（存在しない場合はnull）
  */
 function extractFacilityNumber(name, category) {
-    if (!name || name.trim() === '' || name.trim() === ' ') return null;
+    if (!name || name.trim() === '') return null;
     
     const trimmedName = name.trim();
     
@@ -58,7 +58,7 @@ function extractFacilityNumber(name, category) {
  */
 function getFacilityDisplayName(facility) {
     const categoryName = getFacilityCategoryName(facility.properties.category);
-    const name = facility.properties.name && facility.properties.name.trim() !== '' && facility.properties.name.trim() !== ' '
+    const name = facility.properties.name && facility.properties.name.trim() !== ''
         ? facility.properties.name.trim()
         : null;
     
@@ -136,7 +136,7 @@ function showFacilityList() {
         Object.keys(facilitiesByCategory).sort().forEach(category => {
             facilitiesByCategory[category].forEach(facility => {
                 const categoryName = getFacilityCategoryName(category);
-                const name = facility.properties.name && facility.properties.name.trim() !== '' && facility.properties.name.trim() !== ' '
+                const name = facility.properties.name && facility.properties.name.trim() !== ''
                     ? facility.properties.name.trim()
                     : '';
                 const number = extractFacilityNumber(name, category);
@@ -241,7 +241,7 @@ function showFacilitySelectPanel(selectionType) {
         Object.keys(facilitiesByCategory).sort().forEach(category => {
             facilitiesByCategory[category].forEach(facility => {
                 const categoryName = getFacilityCategoryName(category);
-                const name = facility.properties.name && facility.properties.name.trim() !== '' && facility.properties.name.trim() !== ' '
+                const name = facility.properties.name && facility.properties.name.trim() !== ''
                     ? facility.properties.name.trim()
                     : '';
                 const number = extractFacilityNumber(name, category);
