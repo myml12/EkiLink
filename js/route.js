@@ -260,6 +260,9 @@ function performRouteSearch() {
     if (playBtn) {
         playBtn.style.display = 'flex';
     }
+
+    // 道案内モーダルを表示
+    showNavigationModal(path);
 }
 
 /**
@@ -487,6 +490,9 @@ function clearRoute() {
     if (playBtn) {
         playBtn.style.display = 'none';
     }
+
+    // 道案内モーダルを閉じる
+    closeNavigationModal();
 
     // 経路レイヤーをクリア
     const routeData = {

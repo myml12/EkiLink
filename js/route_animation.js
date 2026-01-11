@@ -15,9 +15,9 @@ function playRouteAnimation() {
         return;
     }
 
-    // 改善されたカメラ設定
-    const targetZoom = 20; // より大きなズームレベルで見やすく
-    const targetPitch = 60; // 適度な角度で経路を見下ろす
+    // 最適化されたカメラ設定
+    const targetZoom = 21; // 近距離で詳細を表示
+    const targetPitch = 65; // より自然な視点角度
 
     // 経路上の各ノードの座標を取得（元の座標とbearing計算用）
     const routeCoords = [];
@@ -123,7 +123,7 @@ function playRouteAnimation() {
 
     // アニメーションの設定
     let currentIndex = 0;
-    const duration = 1500; // 各ノード間の移動時間を少し長くして滑らかに
+    const duration = 600; // 高速化：各ノード間の移動時間を短縮
 
     // 最初のノードへの移動準備
     const firstCoord = routeCoords[0];
