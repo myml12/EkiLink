@@ -8,6 +8,7 @@ const SPACE_HIGHLIGHT_WIDTH = 3;              // Border width (px)
 const SPACE_HIGHLIGHT_OPACITY = 0.9;          // Opacity
 const SPACE_HIGHLIGHT_SOURCE_ID = 'space-highlight-source';
 const SPACE_HIGHLIGHT_LAYER_ID = 'space-highlight-layer';
+const SPACE_HIGHLIGHT_OUTLINE_SUFFIX = '-outline'; // Outline layer suffix
 
 /**
  * Space情報をポップアップ表示する関数
@@ -133,9 +134,9 @@ function highlightSpaceFeature(feature) {
             });
             
             // 枠線用の追加レイヤー（lineレイヤーを同じ位置に追加）
-            if (!map.getLayer(SPACE_HIGHLIGHT_LAYER_ID + '-outline')) {
+            if (!map.getLayer(SPACE_HIGHLIGHT_LAYER_ID + SPACE_HIGHLIGHT_OUTLINE_SUFFIX)) {
                 map.addLayer({
-                    id: SPACE_HIGHLIGHT_LAYER_ID + '-outline',
+                    id: SPACE_HIGHLIGHT_LAYER_ID + SPACE_HIGHLIGHT_OUTLINE_SUFFIX,
                     type: 'line',
                     source: SPACE_HIGHLIGHT_SOURCE_ID,
                     paint: {
@@ -159,8 +160,8 @@ function removeSpaceHighlight() {
 
     try {
         // レイヤーとソースを削除
-        if (map.getLayer(SPACE_HIGHLIGHT_LAYER_ID + '-outline')) {
-            map.removeLayer(SPACE_HIGHLIGHT_LAYER_ID + '-outline');
+        if (map.getLayer(SPACE_HIGHLIGHT_LAYER_ID + SPACE_HIGHLIGHT_OUTLINE_SUFFIX)) {
+            map.removeLayer(SPACE_HIGHLIGHT_LAYER_ID + SPACE_HIGHLIGHT_OUTLINE_SUFFIX);
         }
         if (map.getLayer(SPACE_HIGHLIGHT_LAYER_ID)) {
             map.removeLayer(SPACE_HIGHLIGHT_LAYER_ID);
