@@ -2,6 +2,10 @@
 // 道案内モーダルウィンドウ機能
 // ============================================================================
 
+// 道案内の定数
+const SIGNIFICANT_ANGLE_THRESHOLD = 30; // 重要な曲がり角の角度閾値（度）
+const FACILITY_PROXIMITY_THRESHOLD = 15; // 施設との近接判定距離（メートル）
+
 /**
  * 方向ベクトル間の角度差を計算（度数）
  */
@@ -23,7 +27,7 @@ function isSignificantWaypoint(prevNode, currentNode, nextNode, currentFloor, ne
     }
     
     // エレベーター、エスカレーター、階段の近くは重要
-    const facility = findNearestFacilityToNode(currentNode.properties.node_id, 15);
+    const facility = findNearestFacilityToNode(currentNode.properties.node_id, FACILITY_PROXIMITY_THRESHOLD);
     if (facility) {
         const category = facility.category;
         // エレベーター、エスカレーター、階段をチェック
@@ -59,7 +63,7 @@ function isSignificantWaypoint(prevNode, currentNode, nextNode, currentFloor, ne
     // 角度差を計算（30度以上の変化があれば曲がり角とみなす）
     const angleDiff = calculateAngleDifference(prevAngle, nextAngle);
     
-    return angleDiff >= 30;
+    return angleDiff >= SIGNIFICANT_ANGLE_THRESHOLD;
 }
 
 /**

@@ -2,6 +2,11 @@
 // 経路アニメーション機能
 // ============================================================================
 
+// アニメーション定数
+const ANIMATION_DURATION_MS = 3000; // アニメーション全体の長さ（ミリ秒）
+const DIMMED_OPACITY = 80; // 非アクティブな階層の透明度
+const ACTIVE_OPACITY = 255; // アクティブな階層の透明度
+
 // アニメーション状態の管理
 let animationState = {
     isAnimating: false,
@@ -58,7 +63,7 @@ function playRouteAnimation() {
         startTime: null,
         routeCoords: routeCoords,
         currentSegmentIndex: 0,
-        duration: 3000, // 全体で3秒
+        duration: ANIMATION_DURATION_MS,
         currentAnimationFloor: routeCoords[0].floor // 最初の階層で初期化
     };
 
@@ -234,7 +239,7 @@ function updateLayerOpacityForAnimation(currentFloor) {
                 const floor = nodeFloorMap[d.properties.node_id] ?? d.properties.floor;
                 const color = stationLogic.getFloorColor(floor);
                 // 現在のアニメーション階層以外は透明度を下げる
-                const opacity = floor === currentFloor ? 255 : 80;
+                const opacity = floor === currentFloor ? ACTIVE_OPACITY : DIMMED_OPACITY;
                 return [color[0], color[1], color[2], opacity];
             },
             stroked: true,
@@ -242,7 +247,7 @@ function updateLayerOpacityForAnimation(currentFloor) {
                 const floor = nodeFloorMap[d.properties.node_id] ?? d.properties.floor;
                 const fillColor = stationLogic.getFloorColor(floor);
                 const strokeColor = getNodeStrokeColor(fillColor);
-                const opacity = floor === currentFloor ? 255 : 80;
+                const opacity = floor === currentFloor ? ACTIVE_OPACITY : DIMMED_OPACITY;
                 return [strokeColor[0], strokeColor[1], strokeColor[2], opacity];
             },
             lineWidthMinPixels: 1,
@@ -289,7 +294,7 @@ function updateLayerOpacityForAnimation(currentFloor) {
                 const startFloor = nodeFloorMap[d.properties.start_id];
                 const endFloor = nodeFloorMap[d.properties.end_id];
                 // どちらかのノードが現在の階層にあれば表示
-                const opacity = (startFloor === currentFloor || endFloor === currentFloor) ? 255 : 80;
+                const opacity = (startFloor === currentFloor || endFloor === currentFloor) ? ACTIVE_OPACITY : DIMMED_OPACITY;
                 return [0, 255, 255, opacity];
             },
             parameters: {
