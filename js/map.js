@@ -278,12 +278,7 @@ async function setupMap() {
             // 枠線の色を塗りつぶしの色より少し濃くする
             const floor = nodeFloorMap[d.properties.node_id] ?? d.properties.floor;
             const fillColor = stationLogic.getFloorColor(floor);
-            return [
-                Math.max(0, fillColor[0] - 30),
-                Math.max(0, fillColor[1] - 30),
-                Math.max(0, fillColor[2] - 30),
-                255
-            ];
+            return getNodeStrokeColor(fillColor);
         },
         lineWidthMinPixels: 1,
         lineWidthMaxPixels: 2,

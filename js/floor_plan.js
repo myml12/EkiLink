@@ -346,12 +346,7 @@ function updateNodeLayer(floor, MapboxLayer) {
         getLineColor: (d) => {
             const nodeFloor = nodeFloorMap[d.properties.node_id] ?? d.properties.floor;
             const fillColor = stationLogic.getFloorColor(nodeFloor);
-            return [
-                Math.max(0, fillColor[0] - 30),
-                Math.max(0, fillColor[1] - 30),
-                Math.max(0, fillColor[2] - 30),
-                255
-            ];
+            return getNodeStrokeColor(fillColor);
         },
         lineWidthMinPixels: 1,
         lineWidthMaxPixels: 2,
