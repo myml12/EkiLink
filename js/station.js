@@ -104,6 +104,7 @@ async function switchStation(stationId) {
     const configResponse = await fetch(`./data/stations/${stationId}/config.json`);
     if (!configResponse.ok) {
         console.error(`駅 ${stationId} の設定ファイルが見つかりません`);
+        hideMapLoading();
         return;
     }
     config = await configResponse.json();
@@ -154,6 +155,7 @@ async function switchStation(stationId) {
 
     if (!stationLogic) {
         console.error(`[駅切り替え] stationLogicの設定に失敗しました: ${stationId}`);
+        hideMapLoading();
         return;
     }
 
@@ -161,19 +163,25 @@ async function switchStation(stationId) {
     document.getElementById('station-name').textContent = `${config.stationName} 経路検索アプリ`;
     document.title = 'EkiLink';
 
-    // マップを再初期化
-    if (map) {
-        // 既存のマップがある場合、設定を更新してセットアップを実行
-        map.setCenter(config.center);
-        map.setZoom(config.zoom);
-        map.setPitch(config.pitch);
-        map.setBearing(config.bearing);
-        await setupMap();
-        // 設備一覧パネルが開いていた場合は再表示（スクロール位置もリセットされる）
-        if (wasFacilityListOpen && typeof showFacilityList === 'function') {
-            showFacilityList();
-        }
-    } else {
+    // ローディング表示を開始
+    showMapLoading();
+
+    try {
+        // マップを再初期化
+        if (map) {
+            // 既存のマップがある場合、設定を更新してセットアップを実行
+            map.setCenter(config.center);
+            map.setZoom(config.zoom);
+            map.setPitch(config.pitch);
+            map.setBearing(config.bearing);
+            await setupMap();
+            // ローディング表示を非表示
+            hideMapLoading();
+            // 設備一覧パネルが開いていた場合は再表示（スクロール位置もリセットされる）
+            if (wasFacilityListOpen && typeof showFacilityList === 'function') {
+                showFacilityList();
+            }
+        } else {
         // 新規にマップを作成
         map = new maplibregl.Map({
             container: 'map',
@@ -333,12 +341,52 @@ async function switchStation(stationId) {
 
         // 新規マップの場合はloadイベントを待つ
         map.on('load', async () => {
-            await setupMap();
-            // 設備一覧パネルが開いていた場合は再表示（スクロール位置もリセットされる）
-            if (wasFacilityListOpen && typeof showFacilityList === 'function') {
-                showFacilityList();
+            try {
+                await setupMap();
+                // ローディング表示を非表示
+                hideMapLoading();
+                // 設備一覧パネルが開いていた場合は再表示（スクロール位置もリセットされる）
+                if (wasFacilityListOpen && typeof showFacilityList === 'function') {
+                    showFacilityList();
+                }
+            } catch (error) {
+                console.error('マップのセットアップ中にエラーが発生しました:', error);
+                hideMapLoading();
             }
         });
+
+        // エラーイベントのハンドリング
+        map.on('error', (e) => {
+            console.error('マップの読み込みエラー:', e);
+            hideMapLoading();
+        });
+        }
+    } catch (error) {
+        console.error('マップの初期化中にエラーが発生しました:', error);
+        hideMapLoading();
+    }
+}
+
+/**
+ * マップローディング表示を表示
+ */
+function showMapLoading() {
+    const loadingElement = document.getElementById('map-loading');
+    if (loadingElement) {
+        loadingElement.classList.remove('hidden');
+    }
+}
+
+/**
+ * マップローディング表示を非表示
+ */
+function hideMapLoading() {
+    const loadingElement = document.getElementById('map-loading');
+    if (loadingElement) {
+        // 少し遅延を入れてフェードアウトをスムーズにする
+        setTimeout(() => {
+            loadingElement.classList.add('hidden');
+        }, 300);
     }
 }
 
