@@ -73,6 +73,11 @@ function playRouteAnimation() {
 
     // カメラ位置を補正する関数（ピッチとbearingに基づく）
     function adjustCameraPosition(lng, lat, objectHeight, pitch, bearing) {
+        // NaNチェック：無効な値の場合は補正なしの座標を返す
+        if (isNaN(lng) || isNaN(lat) || isNaN(objectHeight) || isNaN(pitch) || isNaN(bearing)) {
+            return { lng: lng, lat: lat };
+        }
+        
         const pitchRad = pitch * Math.PI / 180;
         const bearingRad = bearing * Math.PI / 180;
         const safePitchRad = Math.min(pitchRad, 85 * Math.PI / 180);
@@ -98,10 +103,15 @@ function playRouteAnimation() {
     // 最初のbearing（第1→第2ノード方向）を計算
     // routeCoordsに2つ以上のノードがあることは既に確認済み
     const secondCoord = routeCoords[1];
-    const firstBearing = calculateBearing(
+    let firstBearing = calculateBearing(
         firstCoord.lng, firstCoord.lat,
         secondCoord.lng, secondCoord.lat
     );
+    
+    // 座標が同一の場合（NaN対策）は現在のbearingを使用、またはデフォルト値(0度=北)を使用
+    if (isNaN(firstBearing)) {
+        firstBearing = map.getBearing() || 0;
+    }
     
     // 最初のノードの補正座標を計算
     const firstAdjusted = adjustCameraPosition(
