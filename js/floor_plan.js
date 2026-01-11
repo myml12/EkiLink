@@ -19,59 +19,37 @@ let savedCameraState = null; // 3Dビュー時のカメラ状態を保存
  * フロアプランビューのセットアップ（イベントリスナー等）
  */
 function setupFloorPlanView() {
-    const toggleBtn = document.getElementById('toggle-floor-view');
-    const closeBtn = document.getElementById('close-floor-selector');
-    const overlay = document.getElementById('floor-selector-overlay');
+    const hierarchyToggle = document.getElementById('hierarchy-display-toggle');
+    const floorSelect = document.getElementById('floor-select');
     
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
-            if (isFloorPlanView) {
-                // フロアプランビューを終了
-                exitFloorPlanView();
-            } else {
-                // フロアプランビューを開始
+    // 階層表示のトグルスイッチ
+    if (hierarchyToggle) {
+        hierarchyToggle.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                // 階層表示をオンにする
                 enterFloorPlanView();
+            } else {
+                // 階層表示をオフにする
+                exitFloorPlanView();
             }
         });
     }
     
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            hideFloorSelectorModal();
+    // 階層選択ドロップダウン
+    if (floorSelect) {
+        floorSelect.addEventListener('change', (e) => {
+            const value = e.target.value;
+            if (value === 'all') {
+                selectFloor(null);
+            } else {
+                const floorValue = parseFloat(value);
+                if (!isNaN(floorValue)) {
+                    const floorConfig = config.floors.find(f => f.nodeFloor === floorValue);
+                    selectFloor(floorValue, floorConfig ? floorConfig.id : null);
+                }
+            }
         });
     }
-    
-    // オーバーレイをクリックしたら閉じる
-    if (overlay) {
-        overlay.addEventListener('click', () => {
-            hideFloorSelectorModal();
-        });
-    }
-}
-
-/**
- * 階層セレクターモーダルを表示
- */
-function showFloorSelectorModal() {
-    const selectorPanel = document.getElementById('floor-selector-panel');
-    const overlay = document.getElementById('floor-selector-overlay');
-    
-    if (selectorPanel) selectorPanel.classList.add('show');
-    if (overlay) overlay.classList.add('show');
-    
-    // フロアセレクターを構築（まだ構築されていない場合）
-    buildFloorSelector();
-}
-
-/**
- * 階層セレクターモーダルを非表示
- */
-function hideFloorSelectorModal() {
-    const selectorPanel = document.getElementById('floor-selector-panel');
-    const overlay = document.getElementById('floor-selector-overlay');
-    
-    if (selectorPanel) selectorPanel.classList.remove('show');
-    if (overlay) overlay.classList.remove('show');
 }
 
 /**
@@ -97,13 +75,17 @@ function enterFloorPlanView() {
         duration: 500
     });
     
-    // UIを更新
-    const toggleBtn = document.getElementById('toggle-floor-view');
+    // ドロップダウンを表示
+    const floorSelectorDropdown = document.getElementById('floor-selector-dropdown');
+    if (floorSelectorDropdown) {
+        floorSelectorDropdown.classList.add('show');
+    }
     
-    if (toggleBtn) toggleBtn.classList.add('active');
+    // 階層セレクターを構築
+    buildFloorSelector();
     
-    // モーダルを表示
-    showFloorSelectorModal();
+    // デフォルトで全階層表示
+    selectFloor(null);
 }
 
 /**
@@ -134,15 +116,17 @@ function exitFloorPlanView() {
         });
     }
     
-    // UIを更新
-    const toggleBtn = document.getElementById('toggle-floor-view');
-    const floorIndicator = document.getElementById('current-floor-indicator');
+    // ドロップダウンを非表示
+    const floorSelectorDropdown = document.getElementById('floor-selector-dropdown');
+    if (floorSelectorDropdown) {
+        floorSelectorDropdown.classList.remove('show');
+    }
     
-    if (toggleBtn) toggleBtn.classList.remove('active');
-    if (floorIndicator) floorIndicator.classList.remove('show');
-    
-    // モーダルを非表示
-    hideFloorSelectorModal();
+    // 階層選択をリセット
+    const floorSelect = document.getElementById('floor-select');
+    if (floorSelect) {
+        floorSelect.value = 'all';
+    }
     
     // 全レイヤーを表示（3D表示に戻す）
     showAllFloors();
@@ -152,45 +136,21 @@ function exitFloorPlanView() {
  * フロアセレクターを構築
  */
 function buildFloorSelector() {
-    const content = document.getElementById('floor-selector-content');
-    if (!content || !config) return;
+    const floorSelect = document.getElementById('floor-select');
+    if (!floorSelect || !config) return;
     
     // 階層をソート（上から下へ）
     const sortedFloors = [...config.floors].sort((a, b) => b.nodeFloor - a.nodeFloor);
     
-    let html = '<div class="floor-selector-description">';
-    html += '階層を選択すると、その階層のみが表示されます。別の階層のノードを誤って選択することを防ぎます。';
-    html += '</div>';
+    // オプションを構築
+    let html = '<option value="all">全階層</option>';
     
-    // 「全階層」ボタン
-    const allFloorsActive = selectedFloor === null ? 'active' : '';
-    html += `<button class="floor-btn floor-btn-all ${allFloorsActive}" data-floor="all">全階層（3D表示）</button>`;
-    
-    // 各階層ボタン
     sortedFloors.forEach(f => {
         const floorName = stationLogic.getFloorName(f.nodeFloor);
-        const color = config.floorColors[f.id] || '#38bdf8';
-        const isActive = selectedFloor === f.nodeFloor ? 'active' : '';
-        html += `<button class="floor-btn ${isActive}" data-floor="${f.nodeFloor}" data-floor-id="${f.id}" style="border-left: 4px solid ${color};">${floorName}</button>`;
+        html += `<option value="${f.nodeFloor}">${floorName}</option>`;
     });
     
-    content.innerHTML = html;
-    
-    // クリックイベントを設定
-    content.querySelectorAll('.floor-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const floorValue = btn.dataset.floor;
-            if (floorValue === 'all') {
-                selectFloor(null);
-            } else {
-                selectFloor(parseFloat(floorValue), btn.dataset.floorId);
-            }
-            
-            // アクティブ状態を更新
-            content.querySelectorAll('.floor-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        });
-    });
+    floorSelect.innerHTML = html;
 }
 
 /**
@@ -201,28 +161,15 @@ function buildFloorSelector() {
 function selectFloor(floor, floorId = null) {
     selectedFloor = floor;
     
-    const floorIndicator = document.getElementById('current-floor-indicator');
-    
     if (floor === null) {
         // 全階層表示
         showAllFloors();
-        if (floorIndicator) {
-            floorIndicator.classList.remove('show');
-        }
-        // モーダルを非表示
-        hideFloorSelectorModal();
+        showToast('全階層を表示中です');
     } else {
         // 特定の階層のみ表示
         showSingleFloor(floor, floorId);
-        if (floorIndicator) {
-            const floorName = stationLogic.getFloorName(floor);
-            floorIndicator.textContent = `📍 ${floorName}`;
-            floorIndicator.classList.add('show');
-        }
-        // モーダルは開いたままにする（ユーザーが複数の階層を簡単に比較できるようにするため）
-        // 「全階層」選択時のみモーダルを閉じる
-        // トーストで通知
-        showToast(`${stationLogic.getFloorName(floor)}を表示中です`);
+        const floorName = stationLogic.getFloorName(floor);
+        showToast(`${floorName}を表示中です`);
     }
 }
 

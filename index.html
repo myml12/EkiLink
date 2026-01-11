@@ -52,35 +52,39 @@
 <body>
 
     <div id="map"></div>
+    
+    <!-- Left-side panel: Station info and selector -->
     <div class="info-panel">
-        <b style="font-size: 1.0em; display: block; margin-bottom: 5px; color: #fff;">大江戸線</b><b
-            style="font-size: 1.2em; display: block; margin-bottom: 5px; color: #fff;" id="station-name">駅 経路検索アプリ</b>
-        <!-- ・フロア (Space): 階層別に色分け描画<br>
-        ・経路 (Link): シアン色で3D接続<br>
-        ・節点 (Node): 階層別に色分け<br> -->
-        <!-- <div class="legend-item">
-            <div class="line" style="background: #00ffff; color: #00ffff;"></div> 経路: Link (3D接続)
+        <b style="font-size: 1.0em; display: block; margin-bottom: 5px; color: #fff;">大江戸線</b>
+        <b style="font-size: 1.2em; display: block; margin-bottom: 10px; color: #fff;" id="station-name">駅 経路検索アプリ</b>
+        
+        <!-- Station selector moved here for better UX -->
+        <div class="station-selector-inline">
+            <label for="station-select" style="display: block; margin-bottom: 8px; color: #38bdf8; font-weight: 500;">駅を選択:</label>
+            <select id="station-select">
+                <option value="">読み込み中...</option>
+            </select>
         </div>
-        <div class="legend-item">
-            <div class="dot" style="background: #38bdf8; color: #38bdf8;"></div> 節点: Node (階層別色分け)
+        
+        <!-- Hierarchy display controls -->
+        <div class="hierarchy-controls">
+            <div class="hierarchy-control-header">
+                <span style="color: #38bdf8; font-weight: 500;">階層表示</span>
+            </div>
+            <div class="hierarchy-toggle-row">
+                <label class="toggle-switch">
+                    <input type="checkbox" id="hierarchy-display-toggle">
+                    <span class="toggle-slider"></span>
+                </label>
+                <span class="toggle-label">階層別表示</span>
+            </div>
+            <div class="floor-selector-dropdown" id="floor-selector-dropdown">
+                <label for="floor-select" style="display: block; margin-bottom: 6px; color: #cbd5e1; font-size: 0.85em;">表示する階層:</label>
+                <select id="floor-select" class="floor-select">
+                    <option value="all">全階層</option>
+                </select>
+            </div>
         </div>
-        <div class="legend-item">
-            <div class="dot"
-                style="background: rgba(100, 116, 139, 0.8); color: rgba(100, 116, 139, 0.8); border: 1px solid rgba(71, 85, 105, 0.8);">
-            </div> 設備: Facility
-        </div>
-        <div class="legend-item">
-            <div class="line" style="background: #ef4444; color: #ef4444;"></div> 検索経路: 最短経路
-        </div>
-        <small style="opacity: 0.6; display: block; margin-top: 10px; color: #94a3b8;">右ドラッグで回転、Ctrl+ドラッグで高度変更</small> -->
-    </div>
-
-    <div class="station-selector">
-        <label for="station-select"
-            style="display: block; margin-bottom: 8px; color: #38bdf8; font-weight: 500;">駅を選択:</label>
-        <select id="station-select">
-            <option value="">読み込み中...</option>
-        </select>
     </div>
 
     <div class="route-search-panel">
@@ -172,37 +176,6 @@
     <div id="space-info-panel" class="space-info-panel" style="display: none;">
         <div id="space-info-content"></div>
     </div>
-
-    <!-- 階層セレクター用オーバーレイ -->
-    <div id="floor-selector-overlay" class="floor-selector-overlay"></div>
-    
-    <!-- 階層セレクター（フロアプランビュー用） -->
-    <div id="floor-selector-panel" class="floor-selector-panel">
-        <div class="floor-selector-header">
-            <div>
-                <span class="floor-selector-title">🏢 階層を選択</span>
-                <span class="floor-selector-subtitle">ポイントを選択する階層を指定してください</span>
-            </div>
-            <button id="close-floor-selector" class="close-btn-small" title="閉じる">×</button>
-        </div>
-        <div id="floor-selector-content" class="floor-selector-content">
-            <div class="floor-selector-description">
-                階層を選択すると、その階層のみが表示されます。別の階層のノードを誤って選択することを防ぎます。
-            </div>
-        </div>
-    </div>
-    
-    <!-- フロアプランビュー切り替えボタン -->
-    <button id="toggle-floor-view" class="floor-view-toggle" title="階層別表示（階層を選択して表示）">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
-            <path d="M7 12h10v2H7zm0-4h10v2H7zm0 8h7v2H7z"/>
-        </svg>
-        階層別表示
-    </button>
-    
-    <!-- 現在の階層インジケーター -->
-    <div id="current-floor-indicator" class="current-floor-indicator"></div>
 
     <!-- トースト通知 -->
     <div id="toast" class="toast">
