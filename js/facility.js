@@ -120,7 +120,7 @@ function showFacilityList() {
     sortedFloors.forEach(floorKey => {
         const floorData = facilitiesByFloor[floorKey];
         html += `<div class="facility-list-floor">`;
-        html += `<div class="facility-list-floor-title">${floorData.floorName} <span style="font-weight: normal; opacity: 0.7; font-size: 0.85em;">(${floorData.facilities.length}件)</span></div>`;
+        html += `<div class="facility-list-floor-title">${floorData.floorName} <span class="facility-count">(${floorData.facilities.length}件)</span></div>`;
 
         // カテゴリごとにグループ化
         const facilitiesByCategory = {};
@@ -218,14 +218,14 @@ function showFacilitySelectPanel(selectionType) {
     let html = '<div class="facility-select-panel" id="facility-select-panel">';
     html += '<div class="facility-select-header">';
     html += `<h3>施設を選択 <span class="selection-type ${selectionType === 'end' ? 'end' : ''}">${selectionType === 'start' ? '出発点' : '到着点'}</span></h3>`;
-    html += '<button class="close-btn" onclick="closeFacilitySelectPanel(); clearSelectionButtonsActive();">×</button>';
+    html += '<button class="close-btn" id="facility-select-close-btn" aria-label="閉じる" title="閉じる">×</button>';
     html += '</div>';
     html += '<div class="facility-select-content">';
 
     sortedFloors.forEach(floorKey => {
         const floorData = facilitiesByFloor[floorKey];
         html += `<div class="facility-select-floor">`;
-        html += `<div class="facility-select-floor-title">${floorData.floorName} <span style="font-weight: normal; opacity: 0.7; font-size: 0.85em;">(${floorData.facilities.length}件)</span></div>`;
+        html += `<div class="facility-select-floor-title">${floorData.floorName} <span class="facility-count">(${floorData.facilities.length}件)</span></div>`;
         html += `<div class="facility-select-floor-items">`;
 
         // カテゴリごとにグループ化
@@ -269,6 +269,14 @@ function showFacilitySelectPanel(selectionType) {
     document.body.insertAdjacentHTML('beforeend', html);
 
     // クリックイベントを設定
+    const closeBtn = document.getElementById('facility-select-close-btn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            closeFacilitySelectPanel();
+            clearSelectionButtonsActive();
+        });
+    }
+
     document.querySelectorAll('.facility-select-item').forEach(item => {
         item.addEventListener('click', () => {
             const facilityId = item.dataset.facilityId;

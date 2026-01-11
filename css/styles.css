@@ -720,6 +720,13 @@ b {
     opacity: 0.6;
 }
 
+/* 施設数表示 */
+.facility-count {
+    font-weight: normal;
+    opacity: 0.7;
+    font-size: 0.85em;
+}
+
 .facility-list-toggle {
     position: absolute;
     top: 15px;
