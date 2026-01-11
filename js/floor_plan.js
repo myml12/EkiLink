@@ -12,6 +12,7 @@ const FLOOR_PLAN_FACILITY_Z = 0.8;         // フロアプランビューでの�
 
 // Space レイヤーの不透明度定数
 const SPACE_NORMAL_OPACITY = 0.45;         // 通常の不透明度（選択された階層）
+const SPACE_SELECTED_OPACITY = 0.7;        // 階層別表示時の選択階層の不透明度（7割）
 const SPACE_REDUCED_OPACITY = 0.15;        // 低い不透明度（非選択の階層、枠線のみ見える）
 
 // フロアプランビューの状態
@@ -186,6 +187,8 @@ function showAllFloors() {
     // 全てのSpaceレイヤーを表示し、3D表示に戻す
     config.floors.forEach(f => {
         const layerId = `space-layer-${f.id}`;
+        const maskLayerId = `space-mask-${f.id}`;
+        const outlineLayerId = `space-outline-${f.id}`;
         
         if (map.getLayer(layerId)) {
             map.setLayoutProperty(layerId, 'visibility', 'visible');
@@ -193,6 +196,16 @@ function showAllFloors() {
             map.setPaintProperty(layerId, 'fill-extrusion-base', f.offset);
             map.setPaintProperty(layerId, 'fill-extrusion-height', f.offset + SPACE_HEIGHT);
             map.setPaintProperty(layerId, 'fill-extrusion-opacity', SPACE_NORMAL_OPACITY); // 通常の不透明度に戻す
+        }
+        
+        // マスクレイヤーを削除（あれば）
+        if (map.getLayer(maskLayerId)) {
+            map.removeLayer(maskLayerId);
+        }
+        
+        // 階層外枠用のlineレイヤーを削除（あれば）
+        if (map.getLayer(outlineLayerId)) {
+            map.removeLayer(outlineLayerId);
         }
     });
     
@@ -208,24 +221,118 @@ function showAllFloors() {
 function showSingleFloor(floor, floorId) {
     if (!map || !config) return;
     
-    // 全ての階層のSpaceレイヤーを表示するが、選択された階層以外は薄く表示
+    let selectedLayerId = null;
+    let selectedFloorId = null;
+    
+    // ステップ1: すべての階層のSpaceレイヤーと外枠レイヤーを処理
     config.floors.forEach(f => {
         const layerId = `space-layer-${f.id}`;
+        const maskLayerId = `space-mask-${f.id}`;
+        const outlineLayerId = `space-outline-${f.id}`;
         const isSelected = f.nodeFloor === floor;
         
         if (map.getLayer(layerId)) {
-            // 全ての階層を表示
+            // すべての階層を表示
             map.setLayoutProperty(layerId, 'visibility', 'visible');
             
             // フロアプランビューではフラットに表示
             map.setPaintProperty(layerId, 'fill-extrusion-base', FLOOR_PLAN_EXTRUSION_BASE);
             map.setPaintProperty(layerId, 'fill-extrusion-height', FLOOR_PLAN_EXTRUSION_HEIGHT);
             
-            // 選択された階層は通常の不透明度、非選択階層は薄く表示
-            const opacity = isSelected ? SPACE_NORMAL_OPACITY : SPACE_REDUCED_OPACITY;
-            map.setPaintProperty(layerId, 'fill-extrusion-opacity', opacity);
+            if (isSelected) {
+                // 選択された階層はより高い不透明度で表示（目立たせる）
+                map.setPaintProperty(layerId, 'fill-extrusion-opacity', SPACE_SELECTED_OPACITY);
+                selectedLayerId = layerId;
+                selectedFloorId = f.id;
+                
+                // 外枠レイヤーを削除（選択階層には不要）
+                if (map.getLayer(outlineLayerId)) {
+                    map.removeLayer(outlineLayerId);
+                }
+                
+                // マスクレイヤーを追加（選択階層の下にOpenStreetMapと外枠を隠すため）
+                const sourceId = `space-src-${f.id}`;
+                if (map.getSource(sourceId)) {
+                    // 既存のマスクレイヤーがあれば削除
+                    if (map.getLayer(maskLayerId)) {
+                        map.removeLayer(maskLayerId);
+                    }
+                    
+                    // マスクレイヤーを追加（完全に不透明な背景色）
+                    map.addLayer({
+                        id: maskLayerId,
+                        type: 'fill',
+                        source: sourceId,
+                        paint: {
+                            'fill-color': '#0b0f1a', // 背景色と同じ
+                            'fill-opacity': 1.0
+                        }
+                    }, layerId); // 選択階層の直前（下）に追加
+                }
+            } else {
+                // 非選択階層は完全に透明にして、外枠のみ表示
+                map.setPaintProperty(layerId, 'fill-extrusion-opacity', 0);
+                
+                // マスクレイヤーを削除（非選択階層には不要）
+                if (map.getLayer(maskLayerId)) {
+                    map.removeLayer(maskLayerId);
+                }
+                
+                // 非選択階層の外枠を表示するlineレイヤーを追加
+                // 既存のレイヤーがあれば削除
+                if (map.getLayer(outlineLayerId)) {
+                    map.removeLayer(outlineLayerId);
+                }
+                
+                // 外枠用のlineレイヤーを追加（選択階層がある場合はその下に配置）
+                const sourceId = `space-src-${f.id}`;
+                if (map.getSource(sourceId)) {
+                    // 選択階層のマスクレイヤーの下に配置
+                    const maskId = selectedFloorId ? `space-mask-${selectedFloorId}` : null;
+                    if (maskId && map.getLayer(maskId)) {
+                        map.addLayer({
+                            id: outlineLayerId,
+                            type: 'line',
+                            source: sourceId,
+                            paint: {
+                                'line-color': config.floorColors[f.id] || '#94a3b8',
+                                'line-width': 1.5,
+                                'line-opacity': 0.3
+                            }
+                        }, maskId); // マスクレイヤーの直前（下）に追加
+                    } else {
+                        map.addLayer({
+                            id: outlineLayerId,
+                            type: 'line',
+                            source: sourceId,
+                            paint: {
+                                'line-color': config.floorColors[f.id] || '#94a3b8',
+                                'line-width': 1.5,
+                                'line-opacity': 0.3
+                            }
+                        });
+                    }
+                }
+            }
         }
     });
+    
+    // ステップ2: 選択階層のレイヤーを最上位に移動（すべての外枠レイヤーの上に表示）
+    if (selectedLayerId && map.getLayer(selectedLayerId)) {
+        // deck.glレイヤーの直前に配置（deck.glレイヤーは最後に追加されるので、その直前が最適）
+        const deckglLayers = ['network-link-layer', 'network-node-layer', 'space-circle-layer', 'facility-layer'];
+        let beforeLayer = null;
+        for (const layerId of deckglLayers) {
+            if (map.getLayer(layerId)) {
+                beforeLayer = layerId;
+                break;
+            }
+        }
+        
+        if (beforeLayer) {
+            map.moveLayer(selectedLayerId, beforeLayer);
+        }
+    }
     
     // deck.glレイヤーのフィルタリングを更新
     updateDeckLayers(floor);
@@ -295,15 +402,7 @@ function updateNodeLayer(floor, MapboxLayer) {
             const nodeFloor = nodeFloorMap[d.properties.node_id] ?? d.properties.floor;
             return stationLogic.getFloorColor(nodeFloor);
         },
-        stroked: true,
-        getLineColor: (d) => {
-            const nodeFloor = nodeFloorMap[d.properties.node_id] ?? d.properties.floor;
-            const fillColor = stationLogic.getFloorColor(nodeFloor);
-            return getNodeStrokeColor(fillColor);
-        },
-        getLineWidth: 1, // 明示的に設定してフィルタリング時にゴーストアウトラインを防ぐ
-        lineWidthMinPixels: 1,
-        lineWidthMaxPixels: 2,
+        stroked: false, // 外枠を削除
         parameters: {
             depthTest: !isFloorPlanView,
             depthFunc: 519,
@@ -492,36 +591,49 @@ function updateFacilityLayer(floor, MapboxLayer) {
 
 /**
  * Space Circle レイヤーを更新（ノードの枠線）
+ * 階層別表示時はspace-circle-layerを完全に非表示にする
  * @param {number|null} floor - 階層番号（nullの場合は全階層表示）
  * @param {any} MapboxLayer - MapboxLayer クラス
  */
 function updateSpaceCircleLayer(floor, MapboxLayer) {
     if (!map.getLayer('space-circle-layer')) return;
     
+    // 階層別表示時はspace-circle-layerを完全に削除
+    if (floor !== null) {
+        // レイヤーを削除し、空のデータで再作成
+        map.removeLayer('space-circle-layer');
+        
+        const emptySpaceCircleLayer = new MapboxLayer({
+            id: 'space-circle-layer',
+            type: deck.GeoJsonLayer,
+            data: {
+                type: 'FeatureCollection',
+                features: [] // 空のデータ
+            },
+            pickable: false,
+            getPointRadius: 0,
+            getFillColor: [0, 0, 0, 0],
+            stroked: false,
+            parameters: {
+                depthTest: false,
+                blend: true,
+                blendFunc: [770, 771, 1, 771]
+            }
+        });
+        map.addLayer(emptySpaceCircleLayer);
+        return;
+    }
+    
+    // 全階層表示時のみspace-circle-layerを表示
     // nodeSpaceMapが存在するか確認（map.jsで定義されているグローバル変数）
     if (typeof nodeSpaceMap === 'undefined') return;
     
-    // フィルタリングされたノードの枠線データを作成
     const SPACE_CIRCLE_RADIUS = 1.5;
-    let filteredNodes = nodesData.features;
-    
-    if (floor !== null) {
-        filteredNodes = nodesData.features.filter(f => {
-            const nodeFloor = nodeFloorMap[f.properties.node_id] ?? f.properties.floor;
-            return nodeFloor === floor;
-        });
-    }
-    
-    const spaceCircleData = filteredNodes
+    const spaceCircleData = nodesData.features
         .filter(f => nodeSpaceMap[f.properties.node_id] !== null && nodeSpaceMap[f.properties.node_id] !== undefined)
         .map(f => {
             const nodeFloor = nodeFloorMap[f.properties.node_id] ?? f.properties.floor;
-            let z;
-            if (isFloorPlanView && floor !== null) {
-                z = FLOOR_PLAN_NODE_Z; // フロアプランビューではフラットに表示
-            } else {
-                z = (config.floorOffsets[String(nodeFloor)] ?? 0) + NODE_Z_OFFSET;
-            }
+            const z = (config.floorOffsets[String(nodeFloor)] ?? 0) + NODE_Z_OFFSET;
             const coords = f.geometry.coordinates;
             const spaceInfo = nodeSpaceMap[f.properties.node_id];
 
@@ -573,7 +685,7 @@ function updateSpaceCircleLayer(floor, MapboxLayer) {
         lineWidthMinPixels: 0.5,
         lineWidthMaxPixels: 1,
         parameters: {
-            depthTest: !isFloorPlanView,
+            depthTest: true,
             depthFunc: 519,
             blend: true,
             blendFunc: [770, 771, 1, 771]

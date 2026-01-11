@@ -328,7 +328,7 @@ function performRouteSearch() {
     // 再生ボタンを表示
     const playBtn = document.getElementById('play-route-animation');
     if (playBtn) {
-        playBtn.style.display = 'flex';
+        playBtn.classList.add('show');
     }
 }
 
@@ -555,7 +555,7 @@ function clearRoute() {
     // 再生ボタンを非表示
     const playBtn = document.getElementById('play-route-animation');
     if (playBtn) {
-        playBtn.style.display = 'none';
+        playBtn.classList.remove('show');
     }
 
     // 道案内モーダルを閉じる

@@ -160,6 +160,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     setupRouteSelectionButtons();
     
+    // ===== 経路検索パネルのトグル機能 =====
+    const routeSearchPanel = document.getElementById('route-search-panel');
+    const routePanelToggleBtn = document.getElementById('route-panel-toggle');
+    
+    // クローズボタン（パネル内のトグルボタン）でパネルを隠す
+    routePanelToggleBtn?.addEventListener('click', () => {
+        routeSearchPanel.classList.add('collapsed');
+        // ハンバーガーボタンを表示
+        showRoutePanelToggle();
+    });
+    
+    // グローバル関数: ルートパネルを再度開く
+    window.showRoutePanelToggle = function() {
+        const floatingToggleBtn = document.createElement('button');
+        floatingToggleBtn.className = 'route-panel-floating-toggle';
+        floatingToggleBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z"/></svg>';
+        floatingToggleBtn.title = 'パネルを開く';
+        floatingToggleBtn.addEventListener('click', () => {
+            routeSearchPanel.classList.remove('collapsed');
+            floatingToggleBtn.remove();
+        });
+        document.body.appendChild(floatingToggleBtn);
+    };
+    
     // 道案内モーダルの初期化
     // コメントアウト: 道案内モーダルは見にくいため一時的に非表示
     // initNavigationModal();

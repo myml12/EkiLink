@@ -368,7 +368,7 @@ b {
    経路検索パネル
    ============================================ */
 .route-search-panel {
-    position: absolute;
+    position: fixed;
     bottom: var(--spacing-lg);
     right: var(--spacing-lg);
     padding: var(--spacing-3xl);
@@ -376,9 +376,98 @@ b {
     z-index: var(--z-base);
     min-width: 300px;
     max-width: 340px;
+    max-height: 80vh;
     backdrop-filter: blur(var(--blur-xl));
     -webkit-backdrop-filter: blur(var(--blur-xl));
     box-shadow: var(--shadow-xl), 0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+    transition: all 0.3s ease, opacity 0.3s ease;
+    opacity: 1;
+    visibility: visible;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.route-search-panel.collapsed {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateX(calc(100% + var(--spacing-lg)));
+    pointer-events: none;
+}
+
+.route-panel-toggle-btn {
+    position: fixed;
+    bottom: var(--spacing-lg);
+    right: var(--spacing-lg);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(var(--color-primary-rgb), 0.2);
+    border: 1px solid var(--border-color-primary);
+    color: var(--color-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    z-index: calc(var(--z-base) + 1);
+}
+
+.route-panel-toggle-btn:hover {
+    background: rgba(var(--color-primary-rgb), 0.3);
+    transform: scale(1.05);
+}
+
+.route-panel-toggle-btn:active {
+    transform: scale(0.95);
+}
+
+.route-search-panel.collapsed .route-panel-toggle-btn::before {
+    content: '≡';
+    position: absolute;
+    font-size: 1.5em;
+    opacity: 0;
+}
+
+.route-panel-floating-toggle {
+    position: fixed;
+    bottom: var(--spacing-lg);
+    right: var(--spacing-lg);
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(var(--color-primary-rgb), 0.3), rgba(var(--color-primary-rgb), 0.15));
+    border: 1px solid var(--border-color-primary);
+    color: var(--color-primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    z-index: calc(var(--z-base) + 1);
+    box-shadow: var(--shadow-lg);
+    animation: pulseFloat 2s ease-in-out infinite;
+}
+
+.route-panel-floating-toggle:hover {
+    background: linear-gradient(135deg, rgba(var(--color-primary-rgb), 0.4), rgba(var(--color-primary-rgb), 0.25));
+    transform: scale(1.1);
+    box-shadow: var(--shadow-xl);
+}
+
+.route-panel-floating-toggle:active {
+    transform: scale(0.95);
+}
+
+@keyframes pulseFloat {
+    0%, 100% {
+        box-shadow: var(--shadow-lg);
+    }
+    50% {
+        box-shadow: var(--shadow-xl), 0 0 20px rgba(var(--color-primary-rgb), 0.3);
+    }
+}
+.route-search-panel:not(.collapsed) .route-panel-toggle-btn {
+    display: none;
 }
 
 .route-search-panel-header {
@@ -1269,4 +1358,64 @@ b {
         max-width: 280px;
         max-height: 50vh;
     }
+}
+
+/* ============================================
+   テキスト・ラベルクラス（インラインスタイル統一用）
+   ============================================ */
+.station-line-name {
+    font-size: 1.0em;
+    display: block;
+    margin-bottom: var(--spacing-xs);
+    color: var(--text-primary);
+}
+
+.station-main-name {
+    font-size: 1.2em;
+    display: block;
+    margin-bottom: var(--spacing-lg);
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.label-inline {
+    display: block;
+    margin-bottom: var(--spacing-md);
+    color: var(--color-primary);
+    font-weight: 500;
+}
+
+.label-section-title {
+    color: var(--color-primary);
+    font-weight: 500;
+}
+
+.label-floor-select {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--text-tertiary);
+    font-size: 0.85em;
+}
+
+.route-search-title {
+    margin: 0;
+    color: var(--color-primary);
+    font-size: 1.1em;
+    font-weight: 600;
+}
+
+.visibility-hidden {
+    display: none;
+}
+
+.visibility-hidden.show {
+    display: block;
+}
+
+.facility-group-hidden {
+    display: none;
+}
+
+.facility-group-hidden.show {
+    display: block;
 }

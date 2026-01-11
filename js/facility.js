@@ -3,6 +3,76 @@
 // ============================================================================
 
 /**
+ * Facilityカテゴリに応じたアイコン（絵文字）を取得
+ * @param {string} category - カテゴリコード
+ * @returns {string} - アイコン（絵文字）
+ */
+// Icons8のSVGアイコンを利用するマッピング
+// 代表的な設備はアイコンのみ表示、それ以外はテキスト表示を行う。
+const FACILITY_ICON_URLS = {
+    'F109': 'https://img.icons8.com/ios-filled/50/restroom.svg',           // トイレ（共通）
+    'F110': 'https://img.icons8.com/ios-filled/50/handicapped-toilet.svg', // 多機能トイレ
+    'F111': 'https://img.icons8.com/ios-filled/50/mens-room.svg',          // 男性用トイレ
+    'F112': 'https://img.icons8.com/ios-filled/50/ladies-room.svg',        // 女性用トイレ
+    'F115': 'https://img.icons8.com/ios-filled/50/atm.svg',                // ATM
+    'F116': 'https://img.icons8.com/ios-filled/50/elevator.svg',           // エレベーター
+    'F117': 'https://img.icons8.com/ios-filled/50/escalator-up.svg',       // エスカレーター
+    'F118': 'https://img.icons8.com/ios-filled/50/stairs-up.svg',          // 階段
+    'F123': 'https://img.icons8.com/ios-filled/50/luggage-locker.svg',     // コインロッカー
+    'F129': 'https://img.icons8.com/ios-filled/50/defibrillator.svg',      // AED
+};
+
+// アイコンだけで表現するカテゴリ
+const ICON_ONLY_CATEGORIES = new Set([
+    'F109', 'F110', 'F111', 'F112', // トイレ類
+    'F115',                         // ATM
+    'F116',                         // エレベーター
+    'F117',                         // エスカレーター
+    'F118',                         // 階段
+    'F123',                         // コインロッカー
+    'F129',                         // AED
+]);
+
+/**
+ * カテゴリに対応するSVGアイコンURLを返す
+ * @param {string} category
+ * @returns {string|null}
+ */
+function getFacilityIconUrl(category) {
+    return FACILITY_ICON_URLS[category] || null;
+}
+
+/**
+ * 表示モードと付随情報を返す（アイコンかテキストか）
+ * @param {object} facility - GeoJSON Feature
+ * @param {boolean} is3D - 3D表示モード（デフォルト: true）
+ * @returns {{mode: 'icon'|'text', iconUrl?: string, label?: string}}
+ */
+function getFacilityRenderInfo(facility, is3D = true) {
+    const category = facility?.properties?.category;
+    const iconUrl = category ? getFacilityIconUrl(category) : null;
+    
+    // アイコンのみカテゴリの場合：テキストは返さない
+    if (iconUrl && ICON_ONLY_CATEGORIES.has(category)) {
+        return { mode: 'icon', iconUrl };
+    }
+
+    // テキスト表示用ラベルを組み立て
+    const name = facility?.properties?.name?.trim?.() || '';
+    const categoryName = getFacilityCategoryName(category);
+    const label = name || categoryName || category || '';
+    
+    // 3D表示時は、アイコンあり＆テキスト短い場合のみテキスト表示
+    // 2D表示時は常にテキスト表示
+    if (is3D && iconUrl && label.length > 15) {
+        // アイコン付きで長いテキストの場合は、3D時はアイコンのみ
+        return { mode: 'icon', iconUrl };
+    }
+    
+    return { mode: 'text', label };
+}
+
+/**
  * Facilityカテゴリ名を取得
  */
 function getFacilityCategoryName(category) {
@@ -71,6 +141,75 @@ function getFacilityDisplayName(facility) {
         return `${categoryName} - ${name}`;
     }
     return categoryName;
+}
+
+// エスカレーター・階段など隣接設備をまとめるためのカテゴリ
+const MERGEABLE_FACILITY_CATEGORIES = new Set(['F117', 'F118']);
+
+// 簡易ハバースイン距離（メートル）
+function getDistanceMeters(coordA, coordB) {
+    const toRad = (d) => (d * Math.PI) / 180;
+    const R = 6371000; // 地球半径[m]
+    const lat1 = toRad(coordA[1]);
+    const lat2 = toRad(coordB[1]);
+    const dLat = toRad(coordB[1] - coordA[1]);
+    const dLon = toRad(coordB[0] - coordA[0]);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+/**
+ * 隣接するエスカレーター/階段を距離しきい値で統合する
+ * @param {Array} features - GeoJSON Feature配列
+ * @param {number} thresholdMeters - 近接とみなす距離
+ * @returns {Array} - マージ後のFeature配列
+ */
+function mergeNearbyFacilities(features, thresholdMeters = 1.2) {
+    const merged = [];
+    features.forEach((feat) => {
+        const category = feat?.properties?.category;
+        const coords = feat?.geometry?.coordinates;
+        if (!category || !Array.isArray(coords)) {
+            merged.push(feat);
+            return;
+        }
+
+        // マージ対象でなければそのまま
+        if (!MERGEABLE_FACILITY_CATEGORIES.has(category)) {
+            merged.push(feat);
+            return;
+        }
+
+        const existingIndex = merged.findIndex((m) => {
+            if (m?.properties?.category !== category) return false;
+            if (!Array.isArray(m?.geometry?.coordinates)) return false;
+            return getDistanceMeters(m.geometry.coordinates, coords) <= thresholdMeters;
+        });
+
+        if (existingIndex >= 0) {
+            // 代表1件に統合し、フラグを付与
+            merged[existingIndex] = {
+                ...merged[existingIndex],
+                properties: {
+                    ...merged[existingIndex].properties,
+                    _merged: true,
+                    _mergedCount: (merged[existingIndex].properties._mergedCount || 1) + 1
+                }
+            };
+        } else {
+            merged.push({
+                ...feat,
+                properties: {
+                    ...feat.properties,
+                    _merged: false,
+                    _mergedCount: 1
+                }
+            });
+        }
+    });
+
+    return merged;
 }
 
 /**
@@ -160,7 +299,7 @@ function showFacilityList() {
                 html += `<span class="facility-list-group-count">(${group.facilities.length}件)</span>`;
                 html += `<span class="facility-list-group-toggle">▼</span>`;
                 html += `</div>`;
-                html += `<div class="facility-list-group-content" id="${groupId}" style="display: none;">`;
+                html += `<div class="facility-list-group-content facility-group-hidden" id="${groupId}">`;
 
                 group.facilities.forEach((facility, index) => {
                     const facilityName = facility.properties.name && facility.properties.name.trim() !== ''
@@ -210,8 +349,8 @@ function showFacilityList() {
             const toggle = header.querySelector('.facility-list-group-toggle');
 
             if (groupContent) {
-                const isOpen = groupContent.style.display !== 'none';
-                groupContent.style.display = isOpen ? 'none' : 'block';
+                const isOpen = !groupContent.classList.contains('facility-group-hidden');
+                groupContent.classList.toggle('facility-group-hidden');
                 if (toggle) {
                     toggle.textContent = isOpen ? '▼' : '▲';
                 }
@@ -491,7 +630,7 @@ function showFacilitySelectPanel(selectionType) {
                 html += `<span class="facility-list-group-count">(${group.facilities.length}件)</span>`;
                 html += `<span class="facility-list-group-toggle">▼</span>`;
                 html += `</div>`;
-                html += `<div class="facility-list-group-content" id="${groupId}" style="display: none;">`;
+                html += `<div class="facility-list-group-content facility-group-hidden" id="${groupId}">`;
 
                 group.facilities.forEach((facility, index) => {
                     const facilityName = facility.properties.name && facility.properties.name.trim() !== ''
@@ -552,8 +691,8 @@ function showFacilitySelectPanel(selectionType) {
                 const toggle = header.querySelector('.facility-list-group-toggle');
 
                 if (groupContent) {
-                    const isOpen = groupContent.style.display !== 'none';
-                    groupContent.style.display = isOpen ? 'none' : 'block';
+                    const isOpen = !groupContent.classList.contains('facility-group-hidden');
+                    groupContent.classList.toggle('facility-group-hidden');
                     if (toggle) {
                         toggle.textContent = isOpen ? '▼' : '▲';
                     }

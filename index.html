@@ -65,12 +65,12 @@
     
     <!-- Left-side panel: Station info and selector -->
     <div class="info-panel">
-        <b style="font-size: 1.0em; display: block; margin-bottom: 5px; color: #fff;">大江戸線</b>
-        <b style="font-size: 1.2em; display: block; margin-bottom: 10px; color: #fff;" id="station-name">駅 経路検索アプリ</b>
+        <b class="station-line-name">大江戸線</b>
+        <b class="station-main-name" id="station-name">駅 経路検索アプリ</b>
         
         <!-- Station selector moved here for better UX -->
         <div class="station-selector-inline">
-            <label for="station-select" style="display: block; margin-bottom: 8px; color: #38bdf8; font-weight: 500;">駅を選択:</label>
+            <label for="station-select" class="label-inline">駅を選択:</label>
             <select id="station-select">
                 <option value="">読み込み中...</option>
             </select>
@@ -79,7 +79,7 @@
         <!-- Hierarchy display controls -->
         <div class="hierarchy-controls">
             <div class="hierarchy-control-header">
-                <span style="color: #38bdf8; font-weight: 500;">階層表示</span>
+                <span class="label-section-title">階層表示</span>
             </div>
             <div class="hierarchy-toggle-row">
                 <label class="toggle-switch">
@@ -89,7 +89,7 @@
                 <span class="toggle-label">階層別表示</span>
             </div>
             <div class="floor-selector-dropdown" id="floor-selector-dropdown">
-                <label for="floor-select" style="display: block; margin-bottom: 6px; color: #cbd5e1; font-size: 0.85em;">表示する階層:</label>
+                <label for="floor-select" class="label-floor-select">表示する階層:</label>
                 <select id="floor-select" class="floor-select">
                     <option value="all">全階層</option>
                 </select>
@@ -97,10 +97,15 @@
         </div>
     </div>
 
-    <div class="route-search-panel">
+    <div class="route-search-panel" id="route-search-panel">
+        <button id="route-panel-toggle" class="route-panel-toggle-btn" title="パネルを閉じる">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
+        </button>
         <div class="route-search-panel-header">
-            <h3 style="margin: 0; color: #38bdf8; font-size: 1.1em; font-weight: 600;">経路検索</h3>
-            <button id="play-route-animation" class="play-route-btn" style="display: none;" title="経路アニメーションを再生">
+            <h3 class="route-search-title">経路検索</h3>
+            <button id="play-route-animation" class="play-route-btn visibility-hidden" title="経路アニメーションを再生">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M8 5v14l11-7z" />
                 </svg>
@@ -191,13 +196,13 @@
     </div>
 
     <!-- 空間情報表示エリア（左下） -->
-    <div id="space-info-panel" class="space-info-panel" style="display: none;">
+    <div id="space-info-panel" class="space-info-panel visibility-hidden">
         <div id="space-info-content"></div>
     </div>
 
     <!-- 道案内モーダルウィンドウ（右側） -->
     <!-- コメントアウト: 道案内モーダルは見にくいため一時的に非表示
-    <div id="navigation-modal" class="navigation-modal" style="display: none;">
+    <div id="navigation-modal" class="navigation-modal visibility-hidden">
         <div class="navigation-modal-header">
             <h3>道案内</h3>
             <button id="close-navigation-modal" class="navigation-close-btn" title="閉じる">
