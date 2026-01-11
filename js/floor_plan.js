@@ -220,6 +220,7 @@ function selectFloor(floor, floorId = null) {
             floorIndicator.classList.add('show');
         }
         // モーダルは開いたままにする（ユーザーが複数の階層を簡単に比較できるようにするため）
+        // 「全階層」選択時のみモーダルを閉じる
         // トーストで通知
         showToast(`${stationLogic.getFloorName(floor)}を表示中です`);
     }
@@ -349,7 +350,7 @@ function updateNodeLayer(floor, MapboxLayer) {
             const fillColor = stationLogic.getFloorColor(nodeFloor);
             return getNodeStrokeColor(fillColor);
         },
-        getLineWidth: 1,
+        getLineWidth: 1, // 明示的に設定してフィルタリング時にゴーストアウトラインを防ぐ
         lineWidthMinPixels: 1,
         lineWidthMaxPixels: 2,
         parameters: {
