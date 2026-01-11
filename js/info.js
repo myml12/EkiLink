@@ -6,9 +6,7 @@
 const SPACE_HIGHLIGHT_COLOR = '#38bdf8';      // Sky blue
 const SPACE_HIGHLIGHT_WIDTH = 3;              // Border width (px)
 const SPACE_HIGHLIGHT_OPACITY = 0.9;          // Opacity
-const SPACE_HIGHLIGHT_SOURCE_ID = 'space-highlight-source';
 const SPACE_HIGHLIGHT_LAYER_ID = 'space-highlight-layer';
-const SPACE_HIGHLIGHT_OUTLINE_SUFFIX = '-outline'; // Outline layer suffix
 
 /**
  * Space情報をポップアップ表示する関数
@@ -106,50 +104,73 @@ function highlightSpaceFeature(feature) {
     }
 
     try {
-        // 新しいソースを追加
-        if (!map.getSource(SPACE_HIGHLIGHT_SOURCE_ID)) {
-            map.addSource(SPACE_HIGHLIGHT_SOURCE_ID, {
-                type: 'geojson',
-                data: {
-                    type: 'FeatureCollection',
-                    features: [feature]
-                }
-            });
+        // deck.glを使用して3D空間に正確に配置
+        const MapboxLayer = deck.MapboxLayer || window.MapboxLayer;
+        
+        if (!MapboxLayer) {
+            console.warn('deck.gl MapboxLayerが利用できません');
+            return;
         }
 
-        // ハイライトレイヤーを追加（fill-extrusionを使用して3D空間に配置）
-        if (!map.getLayer(SPACE_HIGHLIGHT_LAYER_ID)) {
-            map.addLayer({
-                id: SPACE_HIGHLIGHT_LAYER_ID,
-                type: 'fill-extrusion',
-                source: SPACE_HIGHLIGHT_SOURCE_ID,
-                paint: {
-                    'fill-extrusion-color': SPACE_HIGHLIGHT_COLOR,
-                    'fill-extrusion-opacity': 0.0, // 塗りつぶしは透明
-                    'fill-extrusion-base': floorOffset,
-                    'fill-extrusion-height': floorOffset + SPACE_HEIGHT,
-                    // 枠線を表示するために線の色と幅を設定
-                    'fill-extrusion-vertical-gradient': false
-                }
-            });
-            
-            // 枠線用の追加レイヤー（lineレイヤーを同じ位置に追加）
-            if (!map.getLayer(SPACE_HIGHLIGHT_LAYER_ID + SPACE_HIGHLIGHT_OUTLINE_SUFFIX)) {
-                map.addLayer({
-                    id: SPACE_HIGHLIGHT_LAYER_ID + SPACE_HIGHLIGHT_OUTLINE_SUFFIX,
-                    type: 'line',
-                    source: SPACE_HIGHLIGHT_SOURCE_ID,
-                    paint: {
-                        'line-color': SPACE_HIGHLIGHT_COLOR,
-                        'line-width': SPACE_HIGHLIGHT_WIDTH,
-                        'line-opacity': SPACE_HIGHLIGHT_OPACITY
-                    }
-                });
-            }
+        // ポリゴンの座標を3D座標に変換
+        const highlightFeature = JSON.parse(JSON.stringify(feature)); // Deep copy
+        const z = floorOffset + SPACE_HEIGHT / 2; // 階層の中間の高さ
+        
+        // Polygon/MultiPolygonの座標を3Dに変換
+        if (highlightFeature.geometry.type === 'Polygon') {
+            highlightFeature.geometry.coordinates = highlightFeature.geometry.coordinates.map(ring =>
+                ring.map(coord => [coord[0], coord[1], z])
+            );
+        } else if (highlightFeature.geometry.type === 'MultiPolygon') {
+            highlightFeature.geometry.coordinates = highlightFeature.geometry.coordinates.map(polygon =>
+                polygon.map(ring =>
+                    ring.map(coord => [coord[0], coord[1], z])
+                )
+            );
         }
+
+        // deck.glのGeoJsonLayerを使用（3D座標をサポート）
+        const highlightLayer = new MapboxLayer({
+            id: SPACE_HIGHLIGHT_LAYER_ID,
+            type: deck.GeoJsonLayer,
+            data: {
+                type: 'FeatureCollection',
+                features: [highlightFeature]
+            },
+            pickable: false,
+            stroked: true,
+            filled: false, // 塗りつぶしなし
+            getLineColor: hexToRgb(SPACE_HIGHLIGHT_COLOR),
+            getLineWidth: SPACE_HIGHLIGHT_WIDTH,
+            lineWidthMinPixels: SPACE_HIGHLIGHT_WIDTH,
+            lineWidthMaxPixels: SPACE_HIGHLIGHT_WIDTH * 2,
+            parameters: {
+                depthTest: true,
+                depthFunc: 519, // GL_LEQUAL
+                blend: true,
+                blendFunc: [770, 771, 1, 771]
+            }
+        });
+
+        map.addLayer(highlightLayer);
     } catch (error) {
         console.warn('スペースハイライトの追加に失敗しました:', error);
     }
+}
+
+/**
+ * HEXカラーをRGB配列に変換
+ * @param {string} hex - HEXカラーコード (例: "#38bdf8")
+ * @returns {Array<number>} RGB配列 [r, g, b, a]
+ */
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? [
+        parseInt(result[1], 16),
+        parseInt(result[2], 16),
+        parseInt(result[3], 16),
+        Math.floor(SPACE_HIGHLIGHT_OPACITY * 255)
+    ] : [56, 189, 248, 255]; // デフォルト値
 }
 
 /**
@@ -159,15 +180,9 @@ function removeSpaceHighlight() {
     if (!map) return;
 
     try {
-        // レイヤーとソースを削除
-        if (map.getLayer(SPACE_HIGHLIGHT_LAYER_ID + SPACE_HIGHLIGHT_OUTLINE_SUFFIX)) {
-            map.removeLayer(SPACE_HIGHLIGHT_LAYER_ID + SPACE_HIGHLIGHT_OUTLINE_SUFFIX);
-        }
+        // deck.glレイヤーを削除
         if (map.getLayer(SPACE_HIGHLIGHT_LAYER_ID)) {
             map.removeLayer(SPACE_HIGHLIGHT_LAYER_ID);
-        }
-        if (map.getSource(SPACE_HIGHLIGHT_SOURCE_ID)) {
-            map.removeSource(SPACE_HIGHLIGHT_SOURCE_ID);
         }
     } catch (error) {
         console.warn('スペースハイライトの削除に失敗しました:', error);
