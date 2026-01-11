@@ -105,7 +105,7 @@ function highlightSpaceFeature(feature) {
 
     try {
         // deck.glを使用して3D空間に正確に配置
-        const MapboxLayer = deck.MapboxLayer || window.MapboxLayer;
+        const MapboxLayer = window.MapboxLayer || deck.MapboxLayer;
         
         if (!MapboxLayer) {
             console.warn('deck.gl MapboxLayerが利用できません');
@@ -160,7 +160,7 @@ function highlightSpaceFeature(feature) {
 
 /**
  * HEXカラーをRGB配列に変換
- * @param {string} hex - HEXカラーコード (例: "#38bdf8")
+ * @param {string} hex - HEXカラーコード (例: "#38bdf8") - 6桁の形式のみ対応
  * @returns {Array<number>} RGB配列 [r, g, b, a]
  */
 function hexToRgb(hex) {
@@ -170,7 +170,11 @@ function hexToRgb(hex) {
         parseInt(result[2], 16),
         parseInt(result[3], 16),
         Math.floor(SPACE_HIGHLIGHT_OPACITY * 255)
-    ] : [56, 189, 248, 255]; // デフォルト値
+    ] : [
+        // フォールバック: SPACE_HIGHLIGHT_COLORのデフォルト値 (#38bdf8)
+        0x38, 0xbd, 0xf8, 
+        Math.floor(SPACE_HIGHLIGHT_OPACITY * 255)
+    ];
 }
 
 /**
