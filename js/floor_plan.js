@@ -342,7 +342,19 @@ function updateNodeLayer(floor, MapboxLayer) {
             const nodeFloor = nodeFloorMap[d.properties.node_id] ?? d.properties.floor;
             return stationLogic.getFloorColor(nodeFloor);
         },
-        stroked: false,
+        stroked: true,
+        getLineColor: (d) => {
+            const nodeFloor = nodeFloorMap[d.properties.node_id] ?? d.properties.floor;
+            const fillColor = stationLogic.getFloorColor(nodeFloor);
+            return [
+                Math.max(0, fillColor[0] - 30),
+                Math.max(0, fillColor[1] - 30),
+                Math.max(0, fillColor[2] - 30),
+                255
+            ];
+        },
+        lineWidthMinPixels: 1,
+        lineWidthMaxPixels: 2,
         parameters: {
             depthTest: !isFloorPlanView,
             depthFunc: 519,
