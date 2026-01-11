@@ -72,6 +72,11 @@ async function switchStation(stationId) {
     // 施設選択パネルを閉じる
     closeFacilitySelectPanel();
 
+    // スペースのハイライトを削除
+    if (typeof removeSpaceHighlight === 'function') {
+        removeSpaceHighlight();
+    }
+
     // 既存のレイヤーとソースを削除
     if (map) {
         // 経路をクリア
@@ -337,8 +342,8 @@ async function switchStation(stationId) {
                         return;
                     }
 
-                    // 通常モードの場合 (右下に小さく軽めに表示)
-                    showSpaceInfo(spaceFeature.properties);
+                    // 通常モードの場合 (ポップアップで表示)
+                    showSpaceInfo(spaceFeature.properties, spaceFeature, e.lngLat.toArray());
                 }
             } catch (err) {
                 // レイヤーが存在しない場合はエラーを無視

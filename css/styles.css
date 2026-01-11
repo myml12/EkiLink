@@ -331,7 +331,7 @@ b {
 .route-search-panel {
     position: absolute;
     bottom: 15px;
-    left: 15px;
+    right: 15px;
     background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.92));
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -629,7 +629,7 @@ b {
 /* 空間情報表示パネル（右下） */
 .space-info-panel {
     position: absolute;
-    bottom: 15px;
+    bottom: 420px; /* 経路検索パネルの上に配置 */
     right: 15px;
     background: rgba(15, 23, 42, 0.75);
     backdrop-filter: blur(6px);

@@ -2,19 +2,19 @@
 // 情報表示機能
 // ============================================================================
 
+// スペースハイライトの表示設定
+const SPACE_HIGHLIGHT_COLOR = '#38bdf8';      // Sky blue
+const SPACE_HIGHLIGHT_WIDTH = 3;              // Border width (px)
+const SPACE_HIGHLIGHT_OPACITY = 0.9;          // Opacity
+const SPACE_HIGHLIGHT_LAYER_ID = 'space-highlight-layer';
+
 /**
- * Space情報を右下に表示する関数
+ * Space情報をポップアップ表示する関数
  * @param {Object} props - Spaceのproperties
+ * @param {Object} [feature=null] - SpaceのGeoJSON feature（ハイライト表示用、省略時はハイライト無効）
+ * @param {Array<number>} [lngLat=null] - クリックされた位置の座標 [経度, 緯度]
  */
-function showSpaceInfo(props) {
-    const panel = document.getElementById('space-info-panel');
-    const content = document.getElementById('space-info-content');
-
-    if (!panel || !content) {
-        console.warn('空間情報パネルの要素が見つかりません');
-        return;
-    }
-
+function showSpaceInfo(props, feature = null, lngLat = null) {
     // categoryコードの意味を取得（categories.jsonから）
     const getCategoryName = (category) => {
         if (!category) return category;
@@ -28,40 +28,180 @@ function showSpaceInfo(props) {
         return category;
     };
 
-    let html = '';
+    let html = '<div class="space-popup">';
+    html += '<h3>空間情報</h3>';
 
     if (props.category) {
-        html += `<div class="space-category">${getCategoryName(props.category)}</div>`;
+        html += '<div class="info-row">';
+        html += '<span class="info-label">種別:</span>';
+        html += `<span class="info-value">${getCategoryName(props.category)}</span>`;
+        html += '</div>';
     }
 
     // 名称は空白でない場合のみ表示
     if (props.name && props.name.trim() !== '') {
-        html += `<div class="space-name">${props.name.trim()}</div>`;
+        html += '<div class="info-row">';
+        html += '<span class="info-label">名称:</span>';
+        html += `<span class="info-value">${props.name.trim()}</span>`;
+        html += '</div>';
     }
 
-    content.innerHTML = html;
+    html += '</div>';
 
-    // 既存のタイマーをクリア
-    if (showSpaceInfo.timeoutId) {
-        clearTimeout(showSpaceInfo.timeoutId);
+    // ハイライト表示を追加
+    if (feature) {
+        highlightSpaceFeature(feature);
     }
 
-    // 表示アニメーション
-    panel.style.display = 'block';
-    // 次のフレームでアニメーションを開始
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            panel.classList.add('show');
+    // ポップアップを表示
+    if (lngLat && map) {
+        // 既存のポップアップを削除
+        if (currentPopup) {
+            currentPopup.remove();
+        }
+
+        currentPopup = new maplibregl.Popup({
+            closeButton: true,
+            className: 'space-info-popup',
+            offset: [0, -10]
+        })
+            .setLngLat(lngLat)
+            .setHTML(html)
+            .addTo(map);
+
+        // ポップアップが閉じられたときにハイライトも削除
+        currentPopup.on('close', () => {
+            removeSpaceHighlight();
         });
-    });
+    }
+}
 
-    // 3秒後に自動的に非表示
-    showSpaceInfo.timeoutId = setTimeout(() => {
-        panel.classList.remove('show');
-        setTimeout(() => {
-            panel.style.display = 'none';
-        }, 300);
-    }, 3000);
+/**
+ * スペースをハイライト表示する関数
+ * @param {Object} feature - SpaceのGeoJSON feature
+ */
+function highlightSpaceFeature(feature) {
+    if (!map || !config) return;
+
+    // 既存のハイライトを削除
+    removeSpaceHighlight();
+
+    // クリックされたスペースの階層を特定
+    // feature.layer.idから階層IDを抽出 (例: "space-layer-B1F" -> "B1F")
+    let floorId = null;
+    let floorOffset = 0;
+    
+    if (feature.layer && feature.layer.id) {
+        const match = feature.layer.id.match(/space-layer-(.+)/);
+        if (match) {
+            floorId = match[1];
+            // config.floorsから該当する階層の設定を取得
+            const floorConfig = config.floors.find(f => f.id === floorId);
+            if (floorConfig) {
+                floorOffset = floorConfig.offset;
+            }
+        }
+    }
+
+    try {
+        // deck.glを使用して3D空間に正確に配置
+        const MapboxLayer = window.MapboxLayer || deck.MapboxLayer;
+        
+        if (!MapboxLayer) {
+            console.warn('deck.gl MapboxLayerが利用できません');
+            return;
+        }
+
+        // ポリゴンの座標を3D座標に変換
+        const highlightFeature = JSON.parse(JSON.stringify(feature)); // Deep copy
+        const z = floorOffset + SPACE_HEIGHT / 2; // 階層の中間の高さ
+        
+        // Polygon/MultiPolygonの座標を3Dに変換
+        if (highlightFeature.geometry.type === 'Polygon') {
+            highlightFeature.geometry.coordinates = highlightFeature.geometry.coordinates.map(ring =>
+                ring.map(coord => [coord[0], coord[1], z])
+            );
+        } else if (highlightFeature.geometry.type === 'MultiPolygon') {
+            highlightFeature.geometry.coordinates = highlightFeature.geometry.coordinates.map(polygon =>
+                polygon.map(ring =>
+                    ring.map(coord => [coord[0], coord[1], z])
+                )
+            );
+        }
+
+        // レイヤーが既に存在する場合は削除（確実に削除するため）
+        if (map.getLayer(SPACE_HIGHLIGHT_LAYER_ID)) {
+            try {
+                map.removeLayer(SPACE_HIGHLIGHT_LAYER_ID);
+            } catch (e) {
+                console.warn('既存のハイライトレイヤー削除エラー:', e);
+            }
+        }
+
+        // deck.glのGeoJsonLayerを使用（3D座標をサポート）
+        const highlightLayer = new MapboxLayer({
+            id: SPACE_HIGHLIGHT_LAYER_ID,
+            type: deck.GeoJsonLayer,
+            data: {
+                type: 'FeatureCollection',
+                features: [highlightFeature]
+            },
+            pickable: false,
+            stroked: true,
+            filled: false, // 塗りつぶしなし
+            getLineColor: hexToRgb(SPACE_HIGHLIGHT_COLOR),
+            getLineWidth: SPACE_HIGHLIGHT_WIDTH,
+            lineWidthMinPixels: SPACE_HIGHLIGHT_WIDTH,
+            lineWidthMaxPixels: SPACE_HIGHLIGHT_WIDTH * 2,
+            parameters: {
+                depthTest: true,
+                depthFunc: 519, // GL_LEQUAL
+                blend: true,
+                blendFunc: [770, 771, 1, 771]
+            }
+        });
+
+        map.addLayer(highlightLayer);
+        console.log('ハイライトレイヤーを追加しました:', SPACE_HIGHLIGHT_LAYER_ID);
+    } catch (error) {
+        console.error('スペースハイライトの追加に失敗しました:', error);
+    }
+}
+
+/**
+ * HEXカラーをRGB配列に変換
+ * @param {string} hex - HEXカラーコード (例: "#38bdf8") - 6桁の形式のみ対応
+ * @returns {Array<number>} RGB配列 [r, g, b, a]
+ */
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? [
+        parseInt(result[1], 16),
+        parseInt(result[2], 16),
+        parseInt(result[3], 16),
+        Math.floor(SPACE_HIGHLIGHT_OPACITY * 255)
+    ] : [
+        // フォールバック: SPACE_HIGHLIGHT_COLORのデフォルト値 (#38bdf8)
+        0x38, 0xbd, 0xf8, 
+        Math.floor(SPACE_HIGHLIGHT_OPACITY * 255)
+    ];
+}
+
+/**
+ * スペースのハイライトを削除する関数
+ */
+function removeSpaceHighlight() {
+    if (!map) return;
+
+    try {
+        // deck.glレイヤーを削除
+        if (map.getLayer(SPACE_HIGHLIGHT_LAYER_ID)) {
+            map.removeLayer(SPACE_HIGHLIGHT_LAYER_ID);
+            console.log('ハイライトレイヤーを削除しました:', SPACE_HIGHLIGHT_LAYER_ID);
+        }
+    } catch (error) {
+        console.error('スペースハイライトの削除に失敗しました:', error);
+    }
 }
 
 /**
