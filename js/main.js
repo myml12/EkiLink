@@ -108,6 +108,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         playRouteAnimation();
     });
 
+    // 検索モード変更のイベントリスナー
+    const normalTab = document.getElementById('route-mode-normal');
+    const barrierFreeTab = document.getElementById('route-mode-barrier-free');
+    
+    if (normalTab && barrierFreeTab) {
+        [normalTab, barrierFreeTab].forEach(tab => {
+            tab.addEventListener('click', () => {
+                const mode = tab.getAttribute('data-mode');
+                
+                // タブのアクティブ状態を更新
+                normalTab.classList.toggle('active', mode === 'normal');
+                barrierFreeTab.classList.toggle('active', mode === 'barrier-free');
+                
+                // 検索モードを更新
+                routeSearchMode = mode;
+                
+                // 出発点と到着点が両方選択されている場合は自動的に再検索
+                if (routeStartNode && routeEndNode) {
+                    performRouteSearch();
+                }
+            });
+        });
+    }
+
     // 利用可能な駅を読み込む
     await loadAvailableStations();
 

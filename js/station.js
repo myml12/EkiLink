@@ -53,7 +53,7 @@ async function switchStation(stationId) {
 
     // 設備一覧パネルが開いているかチェック（表示されているかどうか）
     const facilityListPanel = document.getElementById('facility-list-panel');
-    const wasFacilityListOpen = facilityListPanel &&
+    const wasFacilityListOpen = facilityListPanel && 
         window.getComputedStyle(facilityListPanel).display !== 'none';
 
     // 既存のレイヤーとソースを削除
@@ -193,9 +193,9 @@ async function switchStation(stationId) {
                 },
                 layers: [
                     {
-                        id: 'background',
-                        type: 'background',
-                        paint: { 'background-color': '#0b0f1a' }
+                    id: 'background',
+                    type: 'background',
+                    paint: { 'background-color': '#0b0f1a' }
                     },
                     {
                         id: 'carto-dark-layer',
@@ -309,21 +309,21 @@ async function switchStation(stationId) {
                     return; // レイヤーが存在しない場合は何もしない
                 }
 
-                const features = map.queryRenderedFeatures(e.point, {
+            const features = map.queryRenderedFeatures(e.point, {
                     layers: availableLayers
-                });
+            });
 
-                if (features.length > 0) {
-                    const spaceFeature = features[0];
+            if (features.length > 0) {
+                const spaceFeature = features[0];
 
-                    // 経路検索モードの場合
-                    if (routeSelectionMode) {
-                        handleRouteFacilitySelection(spaceFeature);
-                        return;
-                    }
+                // 経路検索モードの場合
+                if (routeSelectionMode) {
+                    handleRouteFacilitySelection(spaceFeature);
+                    return;
+                }
 
-                    // 通常モードの場合 (右下に小さく軽めに表示)
-                    showSpaceInfo(spaceFeature.properties);
+                // 通常モードの場合 (右下に小さく軽めに表示)
+                showSpaceInfo(spaceFeature.properties);
                 }
             } catch (err) {
                 // レイヤーが存在しない場合はエラーを無視

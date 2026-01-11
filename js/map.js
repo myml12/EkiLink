@@ -66,7 +66,7 @@ async function setupMap() {
 
     // グラフを構築
     if (typeof buildRouteGraph === 'function') {
-        routeGraph = buildRouteGraph();
+    routeGraph = buildRouteGraph();
     } else {
         console.error('buildRouteGraph関数が見つかりません。route.jsが正しく読み込まれているか確認してください。');
         routeGraph = {};

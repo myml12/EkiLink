@@ -73,31 +73,75 @@ function showFacilityList() {
         html += `<div class="facility-list-floor">`;
         html += `<div class="facility-list-floor-title">${floorData.floorName} (${floorData.facilities.length}件)</div>`;
 
-        // カテゴリごとにグループ化
+        // 同じ階かつ同一カテゴリ（category）の設備をグループ化
         const facilitiesByCategory = {};
         floorData.facilities.forEach(facility => {
             const category = facility.properties.category || 'その他';
+            const categoryName = getFacilityCategoryName(category);
+            // nameが空文字列、null、undefined、または空白のみの場合は空文字列として扱う
+            const rawName = facility.properties.name;
+            const name = (rawName && typeof rawName === 'string' && rawName.trim() !== '')
+                ? rawName.trim()
+                : '';
+            
+            // カテゴリコード（category）でグループ化
             if (!facilitiesByCategory[category]) {
-                facilitiesByCategory[category] = [];
+                facilitiesByCategory[category] = {
+                    category: category,
+                    categoryName: categoryName,
+                    name: name,
+                    facilities: []
+                };
             }
-            facilitiesByCategory[category].push(facility);
+            facilitiesByCategory[category].facilities.push(facility);
         });
 
-        // カテゴリごとに表示
+        // グループごとに表示
         Object.keys(facilitiesByCategory).sort().forEach(category => {
-            facilitiesByCategory[category].forEach(facility => {
-                const categoryName = getFacilityCategoryName(category);
-                const name = facility.properties.name && facility.properties.name.trim() !== ''
+            const group = facilitiesByCategory[category];
+            const hasMultiple = group.facilities.length > 1;
+            // グループIDはカテゴリコードから安全な文字列に変換
+            const groupId = `facility-group-${floorKey}-${category}`;
+            
+            if (hasMultiple) {
+                // 複数ある場合はプルダウン
+                html += `<div class="facility-list-group">`;
+                html += `<div class="facility-list-group-header" data-group-id="${groupId}">`;
+                html += `<span class="facility-list-group-title">${group.categoryName}</span>`;
+                html += `<span class="facility-list-group-count">(${group.facilities.length}件)</span>`;
+                html += `<span class="facility-list-group-toggle">▼</span>`;
+                html += `</div>`;
+                html += `<div class="facility-list-group-content" id="${groupId}" style="display: none;">`;
+                
+                group.facilities.forEach((facility, index) => {
+                    const facilityName = facility.properties.name && facility.properties.name.trim() !== ''
+                        ? facility.properties.name.trim()
+                        : '';
+                    html += `<div class="facility-list-item" data-facility-id="${facility.properties.id}" data-floor-id="${facility._floorId}">`;
+                    html += `<div class="facility-list-item-category">${group.categoryName}</div>`;
+                    if (facilityName) {
+                        html += `<div class="facility-list-item-name">${facilityName}</div>`;
+                    } else {
+                        html += `<div class="facility-list-item-name">設備 ${index + 1}</div>`;
+                    }
+                    html += `</div>`;
+                });
+                
+                html += `</div>`;
+                html += `</div>`;
+            } else {
+                // 1件のみの場合は通常表示
+                const facility = group.facilities[0];
+                const facilityName = facility.properties.name && facility.properties.name.trim() !== ''
                     ? facility.properties.name.trim()
                     : '';
-
                 html += `<div class="facility-list-item" data-facility-id="${facility.properties.id}" data-floor-id="${facility._floorId}">`;
-                html += `<div class="facility-list-item-category">${categoryName}</div>`;
-                if (name) {
-                    html += `<div class="facility-list-item-name">${name}</div>`;
+                html += `<div class="facility-list-item-category">${group.categoryName}</div>`;
+                if (facilityName) {
+                    html += `<div class="facility-list-item-name">${facilityName}</div>`;
                 }
                 html += `</div>`;
-            });
+            }
         });
 
         html += `</div>`;
@@ -107,6 +151,24 @@ function showFacilityList() {
 
     // スクロール位置を一番上にリセット
     content.scrollTop = 0;
+
+    // プルダウンの開閉イベントを設定
+    content.querySelectorAll('.facility-list-group-header').forEach(header => {
+        header.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const groupId = header.dataset.groupId;
+            const groupContent = document.getElementById(groupId);
+            const toggle = header.querySelector('.facility-list-group-toggle');
+            
+            if (groupContent) {
+                const isOpen = groupContent.style.display !== 'none';
+                groupContent.style.display = isOpen ? 'none' : 'block';
+                if (toggle) {
+                    toggle.textContent = isOpen ? '▼' : '▲';
+                }
+            }
+        });
+    });
 
     // クリックイベントを設定
     content.querySelectorAll('.facility-list-item').forEach(item => {
@@ -270,7 +332,7 @@ function focusOnFacility(facilityId, floorId) {
         document.getElementById('select-end').classList.remove('active');
 
         // トーストを表示
-        showToast('現在地を選択してください');
+        showToast('出発地点を選択してください');
 
         // 選択ノードレイヤーを更新
         updateSelectedNodesLayer();

@@ -2,10 +2,15 @@
 // 経路検索機能
 // ============================================================================
 
+// 検索モード: 'normal' または 'barrier-free'
+let routeSearchMode = 'normal';
+
 /**
  * グラフ構造を構築（NodeとLinkから）
+ * @param {boolean} barrierFree - バリアフリー検索用のグラフを構築するか
+ * @param {boolean} avoidElevator - 通常検索でエレベーターを回避するか
  */
-function buildRouteGraph() {
+function buildRouteGraph(barrierFree = false, avoidElevator = false) {
     if (!nodesData || !linksData) {
         console.warn('グラフ構築: nodesDataまたはlinksDataがありません');
         return {};
@@ -26,12 +31,42 @@ function buildRouteGraph() {
     linksData.features.forEach(link => {
         const startId = link.properties.start_id;
         const endId = link.properties.end_id;
+        const routeType = link.properties.route_type;
+
+        // バリアフリー検索の場合は階段・エスカレーターを除外
+        if (barrierFree) {
+            // route_type: 5=エスカレーター, 6=階段
+            if (routeType === 5 || routeType === 6) {
+                return; // このリンクをスキップ
+            }
+        }
+
+        // 通常検索でエレベーターを回避（route_type: 4=エレベーター）
+        if (avoidElevator && routeType === 4) {
+            return; // このリンクをスキップ
+        }
 
         if (nodeCoords[startId] && nodeCoords[endId]) {
-            const distance = calculateDistance(
-                nodeCoords[startId][0], nodeCoords[startId][1],
-                nodeCoords[endId][0], nodeCoords[endId][1]
-            );
+            // linkのdistanceプロパティを優先的に使用（存在する場合）
+            // 仕様書によると、エレベーターの場合はdistanceが記載されないことがある
+            let distance;
+            if (link.properties.distance !== undefined && link.properties.distance !== null && link.properties.distance !== '') {
+                // linkのdistanceプロパティを使用（メートル単位）
+                distance = parseFloat(link.properties.distance);
+                if (isNaN(distance)) {
+                    // distanceが数値でない場合は計算
+                    distance = calculateDistance(
+                        nodeCoords[startId][0], nodeCoords[startId][1],
+                        nodeCoords[endId][0], nodeCoords[endId][1]
+                    );
+                }
+            } else {
+                // distanceプロパティがない場合は座標から計算
+                distance = calculateDistance(
+                    nodeCoords[startId][0], nodeCoords[startId][1],
+                    nodeCoords[endId][0], nodeCoords[endId][1]
+                );
+            }
 
             // 双方向のリンクを追加
             if (!graph[startId][endId] || graph[startId][endId] > distance) {
@@ -225,7 +260,7 @@ function handleRouteFacilitySelection(spaceFeature) {
  * 経路検索を実行する関数
  */
 function performRouteSearch() {
-    if (!routeStartNode || !routeEndNode || !routeGraph) {
+    if (!routeStartNode || !routeEndNode) {
         return;
     }
 
@@ -233,8 +268,39 @@ function performRouteSearch() {
         return;
     }
 
-    const path = dijkstra(routeGraph, routeStartNode, routeEndNode);
+    const isBarrierFree = routeSearchMode === 'barrier-free';
+    let graph = routeGraph;
+
+    // バリアフリー検索の場合はバリアフリー用のグラフを使用
+    if (isBarrierFree) {
+        graph = buildRouteGraph(true, false);
+    } else {
+        // 通常検索の場合はエレベーターを回避したグラフを使用
+        graph = buildRouteGraph(false, true);
+    }
+
+    if (!graph) {
+        return;
+    }
+
+    let path = dijkstra(graph, routeStartNode, routeEndNode);
+    let fallbackToNormal = false;
+
+    // バリアフリー検索で経路が見つからない場合は通常検索にフォールバック
+    if (isBarrierFree && !path) {
+        graph = buildRouteGraph(false, false);
+        path = dijkstra(graph, routeStartNode, routeEndNode);
+        fallbackToNormal = true;
+    }
+
+    // 通常検索でエレベーターを回避した場合に経路が見つからない場合は、エレベーターを使用した検索にフォールバック
+    if (!isBarrierFree && !path) {
+        graph = buildRouteGraph(false, false);
+        path = dijkstra(graph, routeStartNode, routeEndNode);
+    }
+
     if (!path) {
+        showToast('経路が見つかりませんでした');
         return;
     }
 
@@ -242,7 +308,11 @@ function performRouteSearch() {
     drawRoute(path);
 
     // 経路検索完了のトーストを表示
-    showToast('経路検索完了');
+    if (fallbackToNormal) {
+        showToast('バリアフリー経路が見つかりませんでした。通常経路を表示します。', 5000);
+    } else {
+        showToast('経路検索完了');
+    }
 
     // 再生ボタンを表示
     const playBtn = document.getElementById('play-route-animation');

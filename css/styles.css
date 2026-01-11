@@ -34,8 +34,8 @@ body {
 /* 駅選択セレクター */
 .station-selector {
     position: absolute;
-    top: 15px;
-    right: 50px; /* 経路検索パネルの幅分左にずらす */
+    top: 10px;
+    right: 50px;
     background: rgba(15, 23, 42, 0.8);
     backdrop-filter: blur(8px);
     color: #f1f5f9;
@@ -185,8 +185,8 @@ b {
 /* 経路検索パネル */
 .route-search-panel {
     position: absolute;
-    bottom: 15px;
-    left: 15px;
+    bottom: 30px;
+    right: 15px;
     background: rgba(15, 23, 42, 0.8);
     backdrop-filter: blur(8px);
     color: #f1f5f9;
@@ -203,7 +203,6 @@ b {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 12px;
 }
 
 .route-search-panel-header h3 {
@@ -324,11 +323,52 @@ b {
     margin-top: 12px;
 }
 
+/* 検索モード選択タブ */
+.route-search-mode {
+    margin-bottom: 10px;
+}
+
+.route-mode-tabs {
+    display: flex;
+    gap: 4px;
+    background: rgba(30, 41, 59, 0.9);
+    border-radius: 6px;
+    padding: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.route-mode-tab {
+    flex: 1;
+    background: transparent;
+    color: #94a3b8;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.route-mode-tab:hover {
+    background: rgba(56, 189, 248, 0.1);
+    color: #38bdf8;
+}
+
+.route-mode-tab.active {
+    background: rgba(56, 189, 248, 0.3);
+    color: #38bdf8;
+    font-weight: 500;
+}
+
 /* 空間情報表示パネル（右下） */
 .space-info-panel {
     position: absolute;
     bottom: 15px;
-    right: 15px;
+    left: 15px;
     background: rgba(15, 23, 42, 0.75);
     backdrop-filter: blur(6px);
     color: #f1f5f9;
@@ -378,7 +418,7 @@ b {
 /* 設備一覧パネル */
 .facility-list-panel {
     position: absolute;
-    top: 15px;
+    top: 130px;
     left: 15px;
     background: rgba(15, 23, 42, 0.9);
     backdrop-filter: blur(8px);
@@ -506,10 +546,56 @@ b {
     opacity: 0.6;
 }
 
+/* 設備グループ（プルダウン） */
+.facility-list-group {
+    margin-bottom: 8px;
+}
+
+.facility-list-group-header {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    background: rgba(56, 189, 248, 0.15);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-left: 3px solid #38bdf8;
+    margin-bottom: 4px;
+}
+
+.facility-list-group-header:hover {
+    background: rgba(56, 189, 248, 0.25);
+}
+
+.facility-list-group-title {
+    color: #38bdf8;
+    font-size: 0.85em;
+    font-weight: 500;
+    flex: 1;
+}
+
+.facility-list-group-count {
+    color: #94a3b8;
+    font-size: 0.8em;
+    margin-left: 8px;
+}
+
+.facility-list-group-toggle {
+    color: #38bdf8;
+    font-size: 0.75em;
+    margin-left: 8px;
+    transition: transform 0.2s;
+}
+
+.facility-list-group-content {
+    padding-left: 10px;
+    margin-top: 4px;
+}
+
 .facility-list-toggle {
     position: absolute;
-    top: 15px;
-    left: 270px;
+    top: 130px;
+    left: 15px;
     background: rgba(15, 23, 42, 0.9);
     backdrop-filter: blur(8px);
     color: #f1f5f9;
