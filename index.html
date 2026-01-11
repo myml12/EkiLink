@@ -62,12 +62,12 @@
 <body>
 
     <div id="map"></div>
-    
+
     <!-- Left-side panel: Station info and selector -->
     <div class="info-panel">
         <b class="station-line-name">大江戸線</b>
         <b class="station-main-name" id="station-name">駅 経路検索アプリ</b>
-        
+
         <!-- Station selector moved here for better UX -->
         <div class="station-selector-inline">
             <label for="station-select" class="label-inline">駅を選択:</label>
@@ -75,7 +75,7 @@
                 <option value="">読み込み中...</option>
             </select>
         </div>
-        
+
         <!-- Hierarchy display controls -->
         <div class="hierarchy-controls">
             <div class="hierarchy-control-header">
@@ -100,7 +100,8 @@
     <div class="route-search-panel" id="route-search-panel">
         <button id="route-panel-toggle" class="route-panel-toggle-btn" title="パネルを閉じる">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                <path
+                    d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
             </svg>
         </button>
         <div class="route-search-panel-header">
@@ -111,7 +112,7 @@
                 </svg>
             </button>
         </div>
-        
+
         <!-- バリアフリー検索モード選択 -->
         <div class="route-search-mode">
             <div class="route-mode-tabs">
@@ -119,27 +120,31 @@
                 <button id="route-mode-barrier-free" class="route-mode-tab" data-mode="barrier-free">バリアフリー検索</button>
             </div>
         </div>
-        
+
         <!-- 出発点セクション -->
         <div class="route-control-section">
             <div class="route-section-header">
                 <div class="route-section-icon start-icon">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                        <circle cx="12" cy="12" r="8"/>
+                        <circle cx="12" cy="12" r="8" />
                     </svg>
                 </div>
                 <span class="route-section-label">出発点</span>
             </div>
             <div class="route-selection-buttons">
-                <button id="select-start-point" class="route-select-btn" data-type="start" data-mode="point" title="マップ上のポイントをタップ">
+                <button id="select-start-point" class="route-select-btn" data-type="start" data-mode="point"
+                    title="マップ上のポイントをタップ">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                        <path
+                            d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                     </svg>
                     ポイント
                 </button>
-                <button id="select-start-facility" class="route-select-btn" data-type="start" data-mode="facility" title="施設一覧から選択">
+                <button id="select-start-facility" class="route-select-btn" data-type="start" data-mode="facility"
+                    title="施設一覧から選択">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/>
+                        <path
+                            d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z" />
                     </svg>
                     施設
                 </button>
@@ -148,34 +153,38 @@
                 <span id="start-info" class="route-info-text">未選択</span>
             </div>
         </div>
-        
+
         <!-- 矢印アイコン -->
         <div class="route-arrow">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" opacity="0.5">
-                <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
+                <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
             </svg>
         </div>
-        
+
         <!-- 到着点セクション -->
         <div class="route-control-section">
             <div class="route-section-header">
                 <div class="route-section-icon end-icon">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z"/>
+                        <path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6z" />
                     </svg>
                 </div>
                 <span class="route-section-label">到着点</span>
             </div>
             <div class="route-selection-buttons">
-                <button id="select-end-point" class="route-select-btn" data-type="end" data-mode="point" title="マップ上のポイントをタップ">
+                <button id="select-end-point" class="route-select-btn" data-type="end" data-mode="point"
+                    title="マップ上のポイントをタップ">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                        <path
+                            d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                     </svg>
                     ポイント
                 </button>
-                <button id="select-end-facility" class="route-select-btn" data-type="end" data-mode="facility" title="施設一覧から選択">
+                <button id="select-end-facility" class="route-select-btn" data-type="end" data-mode="facility"
+                    title="施設一覧から選択">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z"/>
+                        <path
+                            d="M12 7V3H2v18h20V7H12zM6 19H4v-2h2v2zm0-4H4v-2h2v2zm0-4H4V9h2v2zm0-4H4V5h2v2zm4 12H8v-2h2v2zm0-4H8v-2h2v2zm0-4H8V9h2v2zm0-4H8V5h2v2zm10 12h-8v-2h2v-2h-2v-2h2v-2h-2V9h8v10zm-2-8h-2v2h2v-2zm0 4h-2v2h2v-2z" />
                     </svg>
                     施設
                 </button>
@@ -184,11 +193,12 @@
                 <span id="end-info" class="route-info-text">未選択</span>
             </div>
         </div>
-        
+
         <div class="route-actions">
             <button id="clear-route" class="route-btn-secondary">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                    <path
+                        d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
                 </svg>
                 クリア
             </button>
@@ -213,21 +223,13 @@
         </div>
         <div id="navigation-steps" class="navigation-steps">
             <!-- ナビゲーションステップがここに表示される -->
-        </div>
+    </div>
     </div>
     -->
 
     <!-- トースト通知 -->
     <div id="toast" class="toast">
         <div class="toast-message"></div>
-    </div>
-
-    <!-- マップローディング表示 -->
-    <div id="map-loading" class="map-loading">
-        <div class="map-loading-content">
-            <div class="map-loading-spinner"></div>
-            <div class="map-loading-text">マップを読み込み中...</div>
-        </div>
     </div>
 
 </body>
