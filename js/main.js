@@ -21,11 +21,9 @@ let routeStartNode = null; // 出発点のノードID
 let routeEndNode = null; // 到着点のノードID
 let routePath = null; // 検索された経路（ノードIDの配列）
 let routeSelectionMode = null; // 'start' | 'end' | null
+let routeSelectionInputMode = null; // 'point' | 'facility' | null - 現在選択中の入力モード
 let routeLayer = null; // 経路表示レイヤー
 let selectedNodesLayer = null; // 選択されたノード表示レイヤー
-
-// 選択モード: 'point' | 'facility'
-let selectionInputMode = 'point';
 
 // ============================================================================
 // 初期化
@@ -56,28 +54,109 @@ function setupFacilityListToggle() {
     }
 }
 
-// 選択モード切り替えのセットアップ
-function setupSelectionModeToggle() {
-    const modePointBtn = document.getElementById('mode-point');
-    const modeFacilityBtn = document.getElementById('mode-facility');
+// 新しい選択ボタンのセットアップ
+function setupRouteSelectionButtons() {
+    // 出発点 - ポイントから選択
+    const selectStartPoint = document.getElementById('select-start-point');
+    // 出発点 - 施設から選択
+    const selectStartFacility = document.getElementById('select-start-facility');
+    // 到着点 - ポイントから選択
+    const selectEndPoint = document.getElementById('select-end-point');
+    // 到着点 - 施設から選択
+    const selectEndFacility = document.getElementById('select-end-facility');
 
-    if (modePointBtn) {
-        modePointBtn.addEventListener('click', () => {
-            selectionInputMode = 'point';
-            modePointBtn.classList.add('active');
-            modeFacilityBtn.classList.remove('active');
-            // 施設選択パネルを閉じる
-            closeFacilitySelectPanel();
+    // すべてのボタンのアクティブ状態をクリア
+    function clearAllActiveButtons() {
+        [selectStartPoint, selectStartFacility, selectEndPoint, selectEndFacility].forEach(btn => {
+            if (btn) btn.classList.remove('active');
         });
     }
 
-    if (modeFacilityBtn) {
-        modeFacilityBtn.addEventListener('click', () => {
-            selectionInputMode = 'facility';
-            modeFacilityBtn.classList.add('active');
-            modePointBtn.classList.remove('active');
+    // 出発点 - ポイントから選択
+    if (selectStartPoint) {
+        selectStartPoint.addEventListener('click', () => {
+            if (routeSelectionMode === 'start' && routeSelectionInputMode === 'point') {
+                // 選択解除
+                routeSelectionMode = null;
+                routeSelectionInputMode = null;
+                clearAllActiveButtons();
+                closeFacilitySelectPanel();
+            } else {
+                routeSelectionMode = 'start';
+                routeSelectionInputMode = 'point';
+                clearAllActiveButtons();
+                selectStartPoint.classList.add('active');
+                closeFacilitySelectPanel();
+                showToast('マップ上のポイントをタップしてください');
+            }
         });
     }
+
+    // 出発点 - 施設から選択
+    if (selectStartFacility) {
+        selectStartFacility.addEventListener('click', () => {
+            if (routeSelectionMode === 'start' && routeSelectionInputMode === 'facility') {
+                // 選択解除
+                routeSelectionMode = null;
+                routeSelectionInputMode = null;
+                clearAllActiveButtons();
+                closeFacilitySelectPanel();
+            } else {
+                routeSelectionMode = 'start';
+                routeSelectionInputMode = 'facility';
+                clearAllActiveButtons();
+                selectStartFacility.classList.add('active');
+                showFacilitySelectPanel('start');
+            }
+        });
+    }
+
+    // 到着点 - ポイントから選択
+    if (selectEndPoint) {
+        selectEndPoint.addEventListener('click', () => {
+            if (routeSelectionMode === 'end' && routeSelectionInputMode === 'point') {
+                // 選択解除
+                routeSelectionMode = null;
+                routeSelectionInputMode = null;
+                clearAllActiveButtons();
+                closeFacilitySelectPanel();
+            } else {
+                routeSelectionMode = 'end';
+                routeSelectionInputMode = 'point';
+                clearAllActiveButtons();
+                selectEndPoint.classList.add('active');
+                closeFacilitySelectPanel();
+                showToast('マップ上のポイントをタップしてください');
+            }
+        });
+    }
+
+    // 到着点 - 施設から選択
+    if (selectEndFacility) {
+        selectEndFacility.addEventListener('click', () => {
+            if (routeSelectionMode === 'end' && routeSelectionInputMode === 'facility') {
+                // 選択解除
+                routeSelectionMode = null;
+                routeSelectionInputMode = null;
+                clearAllActiveButtons();
+                closeFacilitySelectPanel();
+            } else {
+                routeSelectionMode = 'end';
+                routeSelectionInputMode = 'facility';
+                clearAllActiveButtons();
+                selectEndFacility.classList.add('active');
+                showFacilitySelectPanel('end');
+            }
+        });
+    }
+}
+
+// 選択ボタンのアクティブ状態をクリアする関数
+function clearSelectionButtonsActive() {
+    ['select-start-point', 'select-start-facility', 'select-end-point', 'select-end-facility'].forEach(id => {
+        const btn = document.getElementById(id);
+        if (btn) btn.classList.remove('active');
+    });
 }
 
 // DOMContentLoadedイベントを待ってから初期化
@@ -98,50 +177,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('カテゴリーデータの読み込みエラー:', e);
     }
     setupFacilityListToggle();
-    setupSelectionModeToggle();
+    setupRouteSelectionButtons();
     
     // イベントリスナー
     document.getElementById('station-select').addEventListener('change', (e) => {
         switchStation(e.target.value);
-    });
-
-    // 経路検索UIのイベントハンドラ
-    document.getElementById('select-start').addEventListener('click', () => {
-        if (routeSelectionMode === 'start') {
-            routeSelectionMode = null;
-            document.getElementById('select-start').classList.remove('active');
-            closeFacilitySelectPanel();
-        } else {
-            routeSelectionMode = 'start';
-            document.getElementById('select-start').classList.add('active');
-            document.getElementById('select-end').classList.remove('active');
-            
-            // 施設モードの場合は施設選択パネルを表示
-            if (selectionInputMode === 'facility') {
-                showFacilitySelectPanel('start');
-            } else {
-                showToast('マップ上のポイントをタップしてください');
-            }
-        }
-    });
-
-    document.getElementById('select-end').addEventListener('click', () => {
-        if (routeSelectionMode === 'end') {
-            routeSelectionMode = null;
-            document.getElementById('select-end').classList.remove('active');
-            closeFacilitySelectPanel();
-        } else {
-            routeSelectionMode = 'end';
-            document.getElementById('select-end').classList.add('active');
-            document.getElementById('select-start').classList.remove('active');
-            
-            // 施設モードの場合は施設選択パネルを表示
-            if (selectionInputMode === 'facility') {
-                showFacilitySelectPanel('end');
-            } else {
-                showToast('マップ上のポイントをタップしてください');
-            }
-        }
     });
 
     document.getElementById('clear-route').addEventListener('click', () => {

@@ -129,13 +129,15 @@ function handleRouteNodeSelection(node) {
     if (routeSelectionMode === 'start') {
         routeStartNode = nodeId;
         document.getElementById('start-info').textContent = displayText;
-        document.getElementById('select-start').classList.remove('active');
+        clearSelectionButtonsActive();
         routeSelectionMode = null;
+        routeSelectionInputMode = null;
     } else if (routeSelectionMode === 'end') {
         routeEndNode = nodeId;
         document.getElementById('end-info').textContent = displayText;
-        document.getElementById('select-end').classList.remove('active');
+        clearSelectionButtonsActive();
         routeSelectionMode = null;
+        routeSelectionInputMode = null;
     }
 
     updateSelectedNodesLayer();
@@ -215,13 +217,15 @@ function handleRouteFacilitySelection(spaceFeature) {
     if (routeSelectionMode === 'start') {
         routeStartNode = nodeId;
         document.getElementById('start-info').textContent = `${categoryName} (${floorName})`;
-        document.getElementById('select-start').classList.remove('active');
+        clearSelectionButtonsActive();
         routeSelectionMode = null;
+        routeSelectionInputMode = null;
     } else if (routeSelectionMode === 'end') {
         routeEndNode = nodeId;
         document.getElementById('end-info').textContent = `${categoryName} (${floorName})`;
-        document.getElementById('select-end').classList.remove('active');
+        clearSelectionButtonsActive();
         routeSelectionMode = null;
+        routeSelectionInputMode = null;
     }
 
     updateSelectedNodesLayer();
@@ -471,11 +475,11 @@ function clearRoute() {
     routeStartNode = null;
     routeEndNode = null;
     routeSelectionMode = null;
+    routeSelectionInputMode = null;
 
     document.getElementById('start-info').textContent = '未選択';
     document.getElementById('end-info').textContent = '未選択';
-    document.getElementById('select-start').classList.remove('active');
-    document.getElementById('select-end').classList.remove('active');
+    clearSelectionButtonsActive();
     updateSelectedNodesLayer();
 
     // 再生ボタンを非表示
