@@ -2,17 +2,103 @@
 // 道案内モーダルウィンドウ機能
 // ============================================================================
 
+// 道案内の定数
+const SIGNIFICANT_ANGLE_THRESHOLD = 30; // 重要な曲がり角の角度閾値（度）
+const FACILITY_PROXIMITY_THRESHOLD = 15; // 施設との近接判定距離（メートル）
+const FACILITY_SEARCH_RADIUS = 20; // 道案内で施設を検索する半径（メートル）
+
 /**
- * 経路から道案内ステップを生成
+ * 方向ベクトル間の角度差を計算（度数）
+ */
+function calculateAngleDifference(angle1, angle2) {
+    let diff = Math.abs(angle1 - angle2);
+    if (diff > 180) {
+        diff = 360 - diff;
+    }
+    return diff;
+}
+
+/**
+ * ノードが重要なポイントかどうかを判定
+ */
+function isSignificantWaypoint(prevNode, currentNode, nextNode, currentFloor, nextFloor) {
+    // ノードの妥当性チェック
+    if (!currentNode || !currentNode.properties) {
+        return false;
+    }
+    
+    // 階層変更がある場合は重要
+    if (currentFloor !== nextFloor) {
+        return true;
+    }
+    
+    // エレベーター、エスカレーター、階段の近くは重要
+    const facility = findNearestFacilityToNode(currentNode.properties.node_id, FACILITY_PROXIMITY_THRESHOLD);
+    if (facility) {
+        const category = facility.category;
+        // エレベーター、エスカレーター、階段をチェック
+        if (category.includes('エレベーター') || 
+            category.includes('エスカレーター') || 
+            category.includes('階段')) {
+            return true;
+        }
+    }
+    
+    // 前のノードがない場合（最初のノード）または次のノードがない場合（最後のノード）
+    if (!prevNode || !nextNode) {
+        return true;
+    }
+    
+    // 方向の変化をチェック
+    const prevCoords = prevNode.geometry.coordinates;
+    const currentCoords = currentNode.geometry.coordinates;
+    const nextCoords = nextNode.geometry.coordinates;
+    
+    // 前のセグメントの方位角を計算
+    const prevAngle = calculateBearingAngle(
+        prevCoords[0], prevCoords[1],
+        currentCoords[0], currentCoords[1]
+    );
+    
+    // 次のセグメントの方位角を計算
+    const nextAngle = calculateBearingAngle(
+        currentCoords[0], currentCoords[1],
+        nextCoords[0], nextCoords[1]
+    );
+    
+    // 角度差を計算（30度以上の変化があれば曲がり角とみなす）
+    const angleDiff = calculateAngleDifference(prevAngle, nextAngle);
+    
+    return angleDiff >= SIGNIFICANT_ANGLE_THRESHOLD;
+}
+
+/**
+ * 方位角を計算（0-360度）
+ */
+function calculateBearingAngle(fromLng, fromLat, toLng, toLat) {
+    const lat1 = fromLat * Math.PI / 180;
+    const lat2 = toLat * Math.PI / 180;
+    const dLng = (toLng - fromLng) * Math.PI / 180;
+    
+    const y = Math.sin(dLng) * Math.cos(lat2);
+    const x = Math.cos(lat1) * Math.sin(lat2) -
+              Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+    let angle = Math.atan2(y, x) * 180 / Math.PI;
+    
+    return (angle + 360) % 360;
+}
+
+/**
+ * 経路から道案内ステップを生成（重要なポイントのみ）
  */
 function generateNavigationSteps(path) {
     if (!path || path.length < 2 || !nodesData) {
         return [];
     }
 
-    const steps = [];
+    const allSteps = [];
     
-    // 各ノードの情報を取得
+    // まず全ノードの情報を収集
     for (let i = 0; i < path.length; i++) {
         const nodeId = path[i];
         const node = nodesData.features.find(n => n.properties.node_id === nodeId);
@@ -23,9 +109,9 @@ function generateNavigationSteps(path) {
         const floorName = stationLogic ? stationLogic.getFloorName(floor) : `階層 ${floor}`;
         
         // 近くの施設を探す
-        const nearbyFacility = findNearestFacilityToNode(nodeId, 20); // 20m以内
+        const nearbyFacility = findNearestFacilityToNode(nodeId, FACILITY_SEARCH_RADIUS);
         
-        // 方向を計算（前のノードから現在のノードへの方向）
+        // 方向を計算
         let direction = null;
         let directionIcon = '';
         
@@ -66,9 +152,10 @@ function generateNavigationSteps(path) {
         if (i === 0) stepType = 'start';
         if (i === path.length - 1) stepType = 'end';
 
-        steps.push({
+        allSteps.push({
             index: i,
             nodeId: nodeId,
+            node: node,
             type: stepType,
             floor: floor,
             floorName: floorName,
@@ -78,6 +165,33 @@ function generateNavigationSteps(path) {
             floorChange: floorChange,
             coords: node.geometry.coordinates
         });
+    }
+
+    // 重要なポイントのみをフィルタリング
+    const steps = [];
+    for (let i = 0; i < allSteps.length; i++) {
+        const step = allSteps[i];
+        
+        // 最初と最後は常に含める
+        if (step.type === 'start' || step.type === 'end') {
+            steps.push(step);
+            continue;
+        }
+        
+        // 階層変更がある場合は含める
+        if (step.floorChange) {
+            steps.push(step);
+            continue;
+        }
+        
+        // 重要なポイントかチェック
+        const prevNode = i > 0 ? allSteps[i - 1].node : null;
+        const nextNode = i < allSteps.length - 1 ? allSteps[i + 1].node : null;
+        const nextFloor = i < allSteps.length - 1 ? allSteps[i + 1].floor : step.floor;
+        
+        if (isSignificantWaypoint(prevNode, step.node, nextNode, step.floor, nextFloor)) {
+            steps.push(step);
+        }
     }
 
     return steps;

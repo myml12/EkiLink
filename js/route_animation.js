@@ -1,58 +1,56 @@
 // ============================================================================
 // 経路アニメーション機能
+// 
+// 依存: utils.js (getNodeStrokeColor), constants.js (NODE_Z_OFFSET, LINK_Z_OFFSET)
 // ============================================================================
 
-// 定数定義
-const EARTH_RADIUS_METERS = 6378137; // 地球の半径（メートル）
-const MAX_SAFE_PITCH_DEG = 85; // 安全な最大ピッチ角度（度）
-const POLAR_REGION_THRESHOLD = 0.000001; // 極点近傍の判定閾値
+// アニメーション定数
+const ANIMATION_DURATION_MS = 3000; // アニメーション全体の長さ（ミリ秒）
+const DIMMED_OPACITY = 80; // 非アクティブな階層の透明度（0-255、約31%）
+const ACTIVE_OPACITY = 255; // アクティブな階層の透明度（0-255、100%）
+
+// アニメーション状態の管理
+let animationState = {
+    isAnimating: false,
+    animationId: null,
+    startTime: null,
+    routeCoords: [],
+    currentSegmentIndex: 0,
+    currentAnimationFloor: null // 現在アニメーション中の階層を追跡
+};
 
 /**
- * 経路アニメーションを再生（改善版：ズーム・カメラアングル調整あり）
+ * 経路アニメーションを再生（ポイント移動アニメーション）
  */
 function playRouteAnimation() {
     if (!routePath || routePath.length < 2 || !map) {
         return;
     }
 
-    // 最適化されたカメラ設定
-    const targetZoom = 21; // 近距離で詳細を表示
-    const targetPitch = 65; // より自然な視点角度
+    // 既存のアニメーションを停止
+    stopRouteAnimation();
 
-    // 経路上の各ノードの座標を取得（元の座標とbearing計算用）
+    // 経路上の各ノードの座標を取得
     const routeCoords = [];
     for (let i = 0; i < routePath.length; i++) {
         const nodeId = routePath[i];
         const node = nodesData.features.find(n => n.properties.node_id === nodeId);
         if (node) {
-            // ノードの階層を取得
             const floor = nodeFloorMap[nodeId] ?? node.properties.floor;
-
-            // 元の2D座標を取得
             const coords = node.properties._originalCoords ||
                 (node.geometry.coordinates.length >= 2 ?
                     [node.geometry.coordinates[0], node.geometry.coordinates[1]] :
                     node.geometry.coordinates);
 
-            let lng = coords[0];
-            let lat = coords[1];
-
-            // 座標の検証
-            if (typeof lng !== 'number' || typeof lat !== 'number' || isNaN(lng) || isNaN(lat)) {
-                continue;
+            if (typeof coords[0] === 'number' && typeof coords[1] === 'number' && 
+                !isNaN(coords[0]) && !isNaN(coords[1])) {
+                routeCoords.push({
+                    lng: coords[0],
+                    lat: coords[1],
+                    floor: floor,
+                    nodeId: nodeId
+                });
             }
-
-            // ノードの実際の高さを計算（補正計算用）
-            const zOffset = config.floorOffsets[String(floor)] ?? 0;
-            const objectHeight = zOffset + NODE_Z_OFFSET + 1.5;
-
-            routeCoords.push({
-                lng: lng,
-                lat: lat,
-                floor: floor,
-                objectHeight: objectHeight,
-                nodeId: nodeId
-            });
         }
     }
 
@@ -60,165 +58,304 @@ function playRouteAnimation() {
         return;
     }
 
-    // マップのbearingを安全に取得するヘルパー関数
-    function getSafeBearing() {
-        // getBearing()は通常は数値(0-360)を返す
-        // 万が一NaNやundefinedの場合は0(北向き)を返す
-        const bearing = map.getBearing();
-        return (typeof bearing === 'number' && !isNaN(bearing)) ? bearing : 0;
-    }
+    // アニメーション状態を初期化
+    animationState = {
+        isAnimating: true,
+        animationId: null,
+        startTime: null,
+        routeCoords: routeCoords,
+        currentSegmentIndex: 0,
+        duration: ANIMATION_DURATION_MS,
+        currentAnimationFloor: routeCoords[0].floor // 最初の階層で初期化
+    };
 
-    // カメラのbearingを計算する関数
-    function calculateBearing(fromLng, fromLat, toLng, toLat) {
-        // 2点間の方位角を計算
-        // 座標を度からラジアンに変換
-        const lat1 = fromLat * Math.PI / 180;
-        const lat2 = toLat * Math.PI / 180;
-        const dLng = (toLng - fromLng) * Math.PI / 180;
-        
-        // 方位角を計算
-        const y = Math.sin(dLng) * Math.cos(lat2);
-        const x = Math.cos(lat1) * Math.sin(lat2) -
-                  Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
-        const bearing = Math.atan2(y, x) * 180 / Math.PI;
-        return (bearing + 360) % 360; // 0-360度に正規化
-    }
+    // 最初の階層で透明度を設定
+    updateLayerOpacityForAnimation(routeCoords[0].floor);
 
-    // カメラ位置を補正する関数（ピッチとbearingに基づく）
-    function adjustCameraPosition(lng, lat, objectHeight, pitch, bearing) {
-        // NaNチェック：無効な値の場合は補正なしの座標を返す
-        // ただし、lngとlatがNaNの場合は元の座標も無効なので、そのままでは使えない
-        if (isNaN(bearing) || isNaN(pitch) || isNaN(objectHeight)) {
-            // bearing等が無効な場合は補正なしで返す（lng, latは有効と仮定）
-            return { lng: lng, lat: lat };
-        }
-        
-        // 座標の有効性チェック
-        if (isNaN(lng) || isNaN(lat)) {
-            console.warn('adjustCameraPosition: 無効な座標が渡されました', lng, lat);
-            // 無効な座標の場合は補正なしで返す（map.flyToがエラー処理する）
-            return { lng: lng, lat: lat };
-        }
-        
-        // 極点近くのチェック（Math.cos(lat)がほぼ0になるのを防ぐ）
-        const latCos = Math.cos(lat * Math.PI / 180);
-        if (Math.abs(latCos) < POLAR_REGION_THRESHOLD) {
-            // 極点付近では補正なしで座標を返す
-            return { lng: lng, lat: lat };
-        }
-        
-        const pitchRad = pitch * Math.PI / 180;
-        const bearingRad = bearing * Math.PI / 180;
-        const safePitchRad = Math.min(pitchRad, MAX_SAFE_PITCH_DEG * Math.PI / 180);
-        const offsetDistance = objectHeight * Math.tan(safePitchRad);
-        
-        const dLat = (offsetDistance * Math.cos(bearingRad)) / EARTH_RADIUS_METERS * (180 / Math.PI);
-        const dLng = (offsetDistance * Math.sin(bearingRad)) / (EARTH_RADIUS_METERS * latCos) * (180 / Math.PI);
-        
-        return {
-            lng: lng + dLng,
-            lat: lat + dLat
-        };
-    }
-
-    // アニメーションの設定
-    let currentIndex = 0;
-    const duration = 600; // 高速化：各ノード間の移動時間を短縮
-
-    // 最初のノードへの移動準備
-    const firstCoord = routeCoords[0];
-    
-    // 最初のbearing（第1→第2ノード方向）を計算
-    // routeCoordsに2つ以上のノードがあることは既に確認済み
-    const secondCoord = routeCoords[1];
-    let firstBearing = calculateBearing(
-        firstCoord.lng, firstCoord.lat,
-        secondCoord.lng, secondCoord.lat
-    );
-    
-    // 座標が同一の場合（NaN対策）は現在のbearingを使用、またはデフォルト値(0度=北)を使用
-    if (isNaN(firstBearing)) {
-        firstBearing = getSafeBearing();
-    }
-    
-    // 最初のノードの補正座標を計算
-    const firstAdjusted = adjustCameraPosition(
-        firstCoord.lng,
-        firstCoord.lat,
-        firstCoord.objectHeight,
-        targetPitch,
-        firstBearing
-    );
-
-    // 最初のノードに移動（ズーム・ピッチ・bearing調整）
-    map.flyTo({
-        center: [firstAdjusted.lng, firstAdjusted.lat],
-        zoom: targetZoom,
-        pitch: targetPitch,
-        bearing: firstBearing,
-        duration: duration,
-        essential: true
-    });
+    // アニメーションポイントレイヤーを追加
+    addAnimationPointLayer();
 
     // アニメーションを開始
-    function animateToNext() {
-        currentIndex++;
+    animationState.startTime = performance.now();
+    animatePoint();
+}
 
-        if (currentIndex >= routeCoords.length) {
-            // アニメーション完了
-            return;
+/**
+ * アニメーションポイントレイヤーの設定を作成
+ */
+function createAnimationPointLayerConfig(pointData) {
+    const MapboxLayer = deck.MapboxLayer || window.MapboxLayer;
+    return new MapboxLayer({
+        id: 'animation-point-layer',
+        type: deck.GeoJsonLayer,
+        data: pointData,
+        pickable: false,
+        getPointRadius: 2.5,
+        radiusMinPixels: 10,
+        radiusMaxPixels: 15,
+        getFillColor: [251, 191, 36, 255], // 黄色
+        stroked: true,
+        getLineColor: [255, 255, 255, 255],
+        lineWidthMinPixels: 2,
+        lineWidthMaxPixels: 3,
+        parameters: {
+            depthTest: false,
+            blend: true,
+            blendFunc: [770, 771, 1, 771]
         }
+    });
+}
 
-        const currentCoord = routeCoords[currentIndex];
-        
-        // 次のノードに向かう方向を計算（bearing）
-        let nextBearing;
-        if (currentIndex < routeCoords.length - 1) {
-            // まだ次のノードがある場合は、その方向を向く
-            const nextCoord = routeCoords[currentIndex + 1];
-            const calculatedBearing = calculateBearing(
-                currentCoord.lng, currentCoord.lat,
-                nextCoord.lng, nextCoord.lat
-            );
-            // 座標が同一の場合（NaN対策）は前回のbearingを維持
-            if (isNaN(calculatedBearing)) {
-                nextBearing = getSafeBearing();
-            } else {
-                nextBearing = calculatedBearing;
-            }
-        } else {
-            // 最後のノードの場合は、前回のbearingを維持
-            nextBearing = getSafeBearing();
-        }
-        
-        // 現在のノードの補正座標を計算
-        const adjustedCoord = adjustCameraPosition(
-            currentCoord.lng,
-            currentCoord.lat,
-            currentCoord.objectHeight,
-            targetPitch,
-            nextBearing
-        );
-
-        // 次のノードに移動（カメラの向きを経路に沿って変更）
-        map.flyTo({
-            center: [adjustedCoord.lng, adjustedCoord.lat],
-            zoom: targetZoom,
-            pitch: targetPitch,
-            bearing: nextBearing,
-            duration: duration,
-            essential: true
-        });
-
-        // 次のアニメーションをスケジュール
-        if (currentIndex < routeCoords.length - 1) {
-            setTimeout(animateToNext, duration);
-        }
+/**
+ * アニメーションポイントレイヤーを追加
+ */
+function addAnimationPointLayer() {
+    // 既存のアニメーションポイントレイヤーを削除
+    if (map.getLayer('animation-point-layer')) {
+        map.removeLayer('animation-point-layer');
     }
 
-    // 最初の移動が完了したらアニメーションを開始
-    setTimeout(() => {
-        animateToNext();
-    }, duration);
+    // 初期位置でレイヤーを作成
+    const firstCoord = animationState.routeCoords[0];
+    const z = config.floorOffsets[String(firstCoord.floor)] ?? 0;
+    
+    const pointData = {
+        type: 'FeatureCollection',
+        features: [{
+            type: 'Feature',
+            geometry: {
+                type: 'Point',
+                coordinates: [firstCoord.lng, firstCoord.lat, z + 2]
+            },
+            properties: {
+                floor: firstCoord.floor
+            }
+        }]
+    };
+
+    map.addLayer(createAnimationPointLayerConfig(pointData));
+}
+
+/**
+ * ポイントをアニメーション
+ */
+function animatePoint() {
+    if (!animationState.isAnimating) {
+        return;
+    }
+
+    const currentTime = performance.now();
+    const elapsed = currentTime - animationState.startTime;
+    const progress = Math.min(elapsed / animationState.duration, 1);
+
+    // 経路全体に対する進行度から現在位置を計算
+    const totalSegments = animationState.routeCoords.length - 1;
+    const currentPosition = progress * totalSegments;
+    const segmentIndex = Math.floor(currentPosition);
+    const segmentProgress = currentPosition - segmentIndex;
+
+    if (segmentIndex >= totalSegments) {
+        // アニメーション完了
+        stopRouteAnimation();
+        return;
+    }
+
+    // 現在のセグメントの座標を取得
+    const startCoord = animationState.routeCoords[segmentIndex];
+    const endCoord = animationState.routeCoords[segmentIndex + 1];
+
+    // 補間された位置を計算
+    const lng = startCoord.lng + (endCoord.lng - startCoord.lng) * segmentProgress;
+    const lat = startCoord.lat + (endCoord.lat - startCoord.lat) * segmentProgress;
+    const floor = startCoord.floor;
+    const z = config.floorOffsets[String(floor)] ?? 0;
+
+    // 階層が変わった場合のみレイヤーの透明度を更新（パフォーマンス最適化）
+    if (animationState.currentAnimationFloor !== floor) {
+        animationState.currentAnimationFloor = floor;
+        updateLayerOpacityForAnimation(floor);
+    }
+
+    // ポイントレイヤーを更新
+    const pointData = {
+        type: 'FeatureCollection',
+        features: [{
+            type: 'Feature',
+            geometry: {
+                type: 'Point',
+                coordinates: [lng, lat, z + 2]
+            },
+            properties: {
+                floor: floor
+            }
+        }]
+    };
+
+    // レイヤーを更新
+    // Note: deck.gl MapboxLayer requires layer recreation for data updates.
+    // This is necessary for compatibility with the current implementation.
+    if (map.getLayer('animation-point-layer')) {
+        map.removeLayer('animation-point-layer');
+    }
+
+    map.addLayer(createAnimationPointLayerConfig(pointData));
+
+    // 次のフレームをスケジュール
+    animationState.animationId = requestAnimationFrame(animatePoint);
+}
+
+/**
+ * ノードレイヤーを作成（透明度付き）
+ */
+function createNodeLayer(currentFloor = null) {
+    const MapboxLayer = deck.MapboxLayer || window.MapboxLayer;
+    return new MapboxLayer({
+        id: 'network-node-layer',
+        type: deck.GeoJsonLayer,
+        data: nodesData,
+        pickable: true,
+        getPointRadius: 1,
+        radiusMinPixels: 6,
+        radiusMaxPixels: 10,
+        getFillColor: (d) => {
+            const floor = nodeFloorMap[d.properties.node_id] ?? d.properties.floor;
+            const color = stationLogic.getFloorColor(floor);
+            // 現在のアニメーション階層が指定されている場合は透明度を調整
+            const opacity = (currentFloor === null || floor === currentFloor) ? ACTIVE_OPACITY : DIMMED_OPACITY;
+            return [color[0], color[1], color[2], opacity];
+        },
+        stroked: true,
+        getLineColor: (d) => {
+            const floor = nodeFloorMap[d.properties.node_id] ?? d.properties.floor;
+            const fillColor = stationLogic.getFloorColor(floor);
+            const strokeColor = getNodeStrokeColor(fillColor);
+            const opacity = (currentFloor === null || floor === currentFloor) ? ACTIVE_OPACITY : DIMMED_OPACITY;
+            return [strokeColor[0], strokeColor[1], strokeColor[2], opacity];
+        },
+        lineWidthMinPixels: 1,
+        lineWidthMaxPixels: 2,
+        parameters: {
+            depthTest: true,
+            depthFunc: 519,
+            blend: true,
+            blendFunc: [770, 771, 1, 771]
+        },
+        dataTransform: (data) => {
+            data.features.forEach(f => {
+                const floor = nodeFloorMap[f.properties.node_id] ?? f.properties.floor;
+                const z = config.floorOffsets[String(floor)];
+                const coords = f.properties._originalCoords ||
+                    (f.geometry.coordinates.length >= 2 ?
+                        [f.geometry.coordinates[0], f.geometry.coordinates[1]] :
+                        f.geometry.coordinates);
+                f.geometry.coordinates = [coords[0], coords[1], z + NODE_Z_OFFSET];
+                f.properties._originalCoords = coords;
+            });
+            return data;
+        }
+    });
+}
+
+/**
+ * リンクレイヤーを作成（透明度付き）
+ */
+function createLinkLayer(currentFloor = null) {
+    const MapboxLayer = deck.MapboxLayer || window.MapboxLayer;
+    return new MapboxLayer({
+        id: 'network-link-layer',
+        type: deck.GeoJsonLayer,
+        data: linksData,
+        pickable: false,
+        lineWidthMinPixels: 2,
+        lineWidthMaxPixels: 4,
+        getLineColor: (d) => {
+            // リンクの階層をstart/endから判定
+            const startFloor = nodeFloorMap[d.properties.start_id];
+            const endFloor = nodeFloorMap[d.properties.end_id];
+            // 現在のアニメーション階層が指定されている場合は透明度を調整
+            const opacity = (currentFloor === null || startFloor === currentFloor || endFloor === currentFloor) 
+                ? ACTIVE_OPACITY : DIMMED_OPACITY;
+            return [0, 255, 255, opacity];
+        },
+        parameters: {
+            depthTest: false,
+            blend: true,
+            blendFunc: [770, 771, 1, 771]
+        },
+        dataTransform: (data) => {
+            data.features.forEach(f => {
+                if (f.geometry.type === 'LineString') {
+                    const startFloor = nodeFloorMap[f.properties.start_id];
+                    const endFloor = nodeFloorMap[f.properties.end_id];
+                    const startZ = config.floorOffsets[String(startFloor)] ?? 0;
+                    const endZ = config.floorOffsets[String(endFloor)] ?? 0;
+                    const coords = f.geometry.coordinates;
+                    f.geometry.coordinates = [
+                        [coords[0][0], coords[0][1], startZ + LINK_Z_OFFSET],
+                        [coords[1][0], coords[1][1], endZ + LINK_Z_OFFSET]
+                    ];
+                }
+            });
+            return data;
+        }
+    });
+}
+
+/**
+ * アニメーション中に他の階層の透明度を下げる
+ */
+function updateLayerOpacityForAnimation(currentFloor) {
+    // ノードレイヤーの透明度を調整
+    const nodeLayer = map.getLayer('network-node-layer');
+    if (nodeLayer && nodesData) {
+        map.removeLayer('network-node-layer');
+        map.addLayer(createNodeLayer(currentFloor), 'space-circle-layer');
+    }
+    
+    // リンクレイヤーの透明度を調整
+    const linkLayer = map.getLayer('network-link-layer');
+    if (linkLayer && linksData) {
+        map.removeLayer('network-link-layer');
+        map.addLayer(createLinkLayer(currentFloor), 'space-circle-layer');
+    }
+}
+
+/**
+ * アニメーションを停止
+ */
+function stopRouteAnimation() {
+    if (animationState.animationId) {
+        cancelAnimationFrame(animationState.animationId);
+    }
+
+    animationState.isAnimating = false;
+    animationState.animationId = null;
+
+    // アニメーションポイントレイヤーを削除
+    if (map.getLayer('animation-point-layer')) {
+        map.removeLayer('animation-point-layer');
+    }
+
+    // レイヤーの透明度を元に戻す
+    restoreLayerOpacity();
+}
+
+/**
+ * レイヤーの透明度を元に戻す
+ */
+function restoreLayerOpacity() {
+    // ノードレイヤーを元に戻す
+    const nodeLayer = map.getLayer('network-node-layer');
+    if (nodeLayer && nodesData) {
+        map.removeLayer('network-node-layer');
+        map.addLayer(createNodeLayer(null), 'space-circle-layer');
+    }
+    
+    // リンクレイヤーを元に戻す
+    const linkLayer = map.getLayer('network-link-layer');
+    if (linkLayer && linksData) {
+        map.removeLayer('network-link-layer');
+        map.addLayer(createLinkLayer(null), 'space-circle-layer');
+    }
 }
 
