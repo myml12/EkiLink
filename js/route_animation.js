@@ -55,6 +55,12 @@ function playRouteAnimation() {
         return;
     }
 
+    // マップのbearingを安全に取得するヘルパー関数
+    function getSafeBearing() {
+        // getBearing()は通常は数値を返すが、念のため0をデフォルトとする
+        return map.getBearing() || 0;
+    }
+
     // カメラのbearingを計算する関数
     function calculateBearing(fromLng, fromLat, toLng, toLat) {
         // 2点間の方位角を計算
@@ -83,7 +89,8 @@ function playRouteAnimation() {
         // 座標の有効性チェック
         if (isNaN(lng) || isNaN(lat)) {
             console.warn('adjustCameraPosition: 無効な座標が渡されました', lng, lat);
-            return { lng: 0, lat: 0 }; // フォールバック座標
+            // 無効な座標の場合は補正なしで返す（map.flyToがエラー処理する）
+            return { lng: lng, lat: lat };
         }
         
         // 極点近くのチェック（Math.cos(lat)がほぼ0になるのを防ぐ）
@@ -125,7 +132,7 @@ function playRouteAnimation() {
     
     // 座標が同一の場合（NaN対策）は現在のbearingを使用、またはデフォルト値(0度=北)を使用
     if (isNaN(firstBearing)) {
-        firstBearing = (map.getBearing() !== null && map.getBearing() !== undefined) ? map.getBearing() : 0;
+        firstBearing = getSafeBearing();
     }
     
     // 最初のノードの補正座標を計算
@@ -169,15 +176,13 @@ function playRouteAnimation() {
             );
             // 座標が同一の場合（NaN対策）は前回のbearingを維持
             if (isNaN(calculatedBearing)) {
-                const currentBearing = map.getBearing();
-                nextBearing = (currentBearing !== null && currentBearing !== undefined) ? currentBearing : 0;
+                nextBearing = getSafeBearing();
             } else {
                 nextBearing = calculatedBearing;
             }
         } else {
             // 最後のノードの場合は、前回のbearingを維持
-            const currentBearing = map.getBearing();
-            nextBearing = (currentBearing !== null && currentBearing !== undefined) ? currentBearing : 0;
+            nextBearing = getSafeBearing();
         }
         
         // 現在のノードの補正座標を計算
