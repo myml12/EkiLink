@@ -208,11 +208,106 @@ function animatePoint() {
  */
 function updateLayerOpacityForAnimation(currentFloor) {
     // ノードレイヤーの透明度を調整
-    const nodesLayer = map.getLayer('nodes-layer');
-    if (nodesLayer) {
-        // deck.glのレイヤーは直接透明度を変更できないため、
-        // データの再作成が必要だが、パフォーマンスの観点から省略
-        // 必要に応じて実装可能
+    const nodeLayer = map.getLayer('network-node-layer');
+    if (nodeLayer && nodesData) {
+        // deck.glレイヤーを再作成して透明度を変更
+        map.removeLayer('network-node-layer');
+        
+        const MapboxLayer = deck.MapboxLayer || window.MapboxLayer;
+        const newNodeLayer = new MapboxLayer({
+            id: 'network-node-layer',
+            type: deck.GeoJsonLayer,
+            data: nodesData,
+            pickable: true,
+            getPointRadius: 1,
+            radiusMinPixels: 6,
+            radiusMaxPixels: 10,
+            getFillColor: (d) => {
+                const floor = nodeFloorMap[d.properties.node_id] ?? d.properties.floor;
+                const color = stationLogic.getFloorColor(floor);
+                // 現在のアニメーション階層以外は透明度を下げる
+                const opacity = floor === currentFloor ? 255 : 80;
+                return [color[0], color[1], color[2], opacity];
+            },
+            stroked: true,
+            getLineColor: (d) => {
+                const floor = nodeFloorMap[d.properties.node_id] ?? d.properties.floor;
+                const fillColor = stationLogic.getFloorColor(floor);
+                const strokeColor = getNodeStrokeColor(fillColor);
+                const opacity = floor === currentFloor ? 255 : 80;
+                return [strokeColor[0], strokeColor[1], strokeColor[2], opacity];
+            },
+            lineWidthMinPixels: 1,
+            lineWidthMaxPixels: 2,
+            parameters: {
+                depthTest: true,
+                depthFunc: 519,
+                blend: true,
+                blendFunc: [770, 771, 1, 771]
+            },
+            dataTransform: (data) => {
+                data.features.forEach(f => {
+                    const floor = nodeFloorMap[f.properties.node_id] ?? f.properties.floor;
+                    const z = config.floorOffsets[String(floor)];
+                    const coords = f.properties._originalCoords ||
+                        (f.geometry.coordinates.length >= 2 ?
+                            [f.geometry.coordinates[0], f.geometry.coordinates[1]] :
+                            f.geometry.coordinates);
+                    f.geometry.coordinates = [coords[0], coords[1], z + NODE_Z_OFFSET];
+                    f.properties._originalCoords = coords;
+                });
+                return data;
+            }
+        });
+        
+        map.addLayer(newNodeLayer, 'space-circle-layer');
+    }
+    
+    // リンクレイヤーの透明度を調整
+    const linkLayer = map.getLayer('network-link-layer');
+    if (linkLayer && linksData) {
+        map.removeLayer('network-link-layer');
+        
+        const MapboxLayer = deck.MapboxLayer || window.MapboxLayer;
+        const newLinkLayer = new MapboxLayer({
+            id: 'network-link-layer',
+            type: deck.GeoJsonLayer,
+            data: linksData,
+            pickable: false,
+            lineWidthMinPixels: 2,
+            lineWidthMaxPixels: 4,
+            getLineColor: (d) => {
+                // リンクの階層をstart/endから判定
+                const startFloor = nodeFloorMap[d.properties.start_id];
+                const endFloor = nodeFloorMap[d.properties.end_id];
+                // どちらかのノードが現在の階層にあれば表示
+                const opacity = (startFloor === currentFloor || endFloor === currentFloor) ? 255 : 80;
+                return [0, 255, 255, opacity];
+            },
+            parameters: {
+                depthTest: false,
+                blend: true,
+                blendFunc: [770, 771, 1, 771]
+            },
+            dataTransform: (data) => {
+                data.features.forEach(f => {
+                    if (f.geometry.type === 'LineString') {
+                        const startFloor = nodeFloorMap[f.properties.start_id];
+                        const endFloor = nodeFloorMap[f.properties.end_id];
+                        const startZ = config.floorOffsets[String(startFloor)] ?? 0;
+                        const endZ = config.floorOffsets[String(endFloor)] ?? 0;
+                        const coords = f.geometry.coordinates;
+                        f.geometry.coordinates = [
+                            [coords[0][0], coords[0][1], startZ + LINK_Z_OFFSET],
+                            [coords[1][0], coords[1][1], endZ + LINK_Z_OFFSET]
+                        ];
+                    }
+                });
+                return data;
+            }
+        });
+        
+        map.addLayer(newLinkLayer, 'space-circle-layer');
     }
 }
 
@@ -240,7 +335,94 @@ function stopRouteAnimation() {
  * レイヤーの透明度を元に戻す
  */
 function restoreLayerOpacity() {
-    // ノードとラインレイヤーの透明度を元に戻す処理
-    // 必要に応じて実装
+    // ノードレイヤーを元に戻す
+    const nodeLayer = map.getLayer('network-node-layer');
+    if (nodeLayer && nodesData) {
+        map.removeLayer('network-node-layer');
+        
+        const MapboxLayer = deck.MapboxLayer || window.MapboxLayer;
+        const newNodeLayer = new MapboxLayer({
+            id: 'network-node-layer',
+            type: deck.GeoJsonLayer,
+            data: nodesData,
+            pickable: true,
+            getPointRadius: 1,
+            radiusMinPixels: 6,
+            radiusMaxPixels: 10,
+            getFillColor: (d) => {
+                const floor = nodeFloorMap[d.properties.node_id] ?? d.properties.floor;
+                return stationLogic.getFloorColor(floor);
+            },
+            stroked: true,
+            getLineColor: (d) => {
+                const floor = nodeFloorMap[d.properties.node_id] ?? d.properties.floor;
+                const fillColor = stationLogic.getFloorColor(floor);
+                return getNodeStrokeColor(fillColor);
+            },
+            lineWidthMinPixels: 1,
+            lineWidthMaxPixels: 2,
+            parameters: {
+                depthTest: true,
+                depthFunc: 519,
+                blend: true,
+                blendFunc: [770, 771, 1, 771]
+            },
+            dataTransform: (data) => {
+                data.features.forEach(f => {
+                    const floor = nodeFloorMap[f.properties.node_id] ?? f.properties.floor;
+                    const z = config.floorOffsets[String(floor)];
+                    const coords = f.properties._originalCoords ||
+                        (f.geometry.coordinates.length >= 2 ?
+                            [f.geometry.coordinates[0], f.geometry.coordinates[1]] :
+                            f.geometry.coordinates);
+                    f.geometry.coordinates = [coords[0], coords[1], z + NODE_Z_OFFSET];
+                    f.properties._originalCoords = coords;
+                });
+                return data;
+            }
+        });
+        
+        map.addLayer(newNodeLayer, 'space-circle-layer');
+    }
+    
+    // リンクレイヤーを元に戻す
+    const linkLayer = map.getLayer('network-link-layer');
+    if (linkLayer && linksData) {
+        map.removeLayer('network-link-layer');
+        
+        const MapboxLayer = deck.MapboxLayer || window.MapboxLayer;
+        const newLinkLayer = new MapboxLayer({
+            id: 'network-link-layer',
+            type: deck.GeoJsonLayer,
+            data: linksData,
+            pickable: false,
+            lineWidthMinPixels: 2,
+            lineWidthMaxPixels: 4,
+            getLineColor: [0, 255, 255, 255],
+            parameters: {
+                depthTest: false,
+                blend: true,
+                blendFunc: [770, 771, 1, 771]
+            },
+            dataTransform: (data) => {
+                data.features.forEach(f => {
+                    if (f.geometry.type === 'LineString') {
+                        const startFloor = nodeFloorMap[f.properties.start_id];
+                        const endFloor = nodeFloorMap[f.properties.end_id];
+                        const startZ = config.floorOffsets[String(startFloor)] ?? 0;
+                        const endZ = config.floorOffsets[String(endFloor)] ?? 0;
+                        const coords = f.geometry.coordinates;
+                        f.geometry.coordinates = [
+                            [coords[0][0], coords[0][1], startZ + LINK_Z_OFFSET],
+                            [coords[1][0], coords[1][1], endZ + LINK_Z_OFFSET]
+                        ];
+                    }
+                });
+                return data;
+            }
+        });
+        
+        map.addLayer(newLinkLayer, 'space-circle-layer');
+    }
 }
 
