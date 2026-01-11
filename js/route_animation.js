@@ -58,10 +58,15 @@ function playRouteAnimation() {
     // カメラのbearingを計算する関数
     function calculateBearing(fromLng, fromLat, toLng, toLat) {
         // 2点間の方位角を計算
-        const dLng = toLng - fromLng;
-        const y = Math.sin(dLng) * Math.cos(toLat);
-        const x = Math.cos(fromLat) * Math.sin(toLat) -
-                  Math.sin(fromLat) * Math.cos(toLat) * Math.cos(dLng);
+        // 座標を度からラジアンに変換
+        const lat1 = fromLat * Math.PI / 180;
+        const lat2 = toLat * Math.PI / 180;
+        const dLng = (toLng - fromLng) * Math.PI / 180;
+        
+        // 方位角を計算
+        const y = Math.sin(dLng) * Math.cos(lat2);
+        const x = Math.cos(lat1) * Math.sin(lat2) -
+                  Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
         const bearing = Math.atan2(y, x) * 180 / Math.PI;
         return (bearing + 360) % 360; // 0-360度に正規化
     }
@@ -89,9 +94,10 @@ function playRouteAnimation() {
 
     // 最初のノードへの移動準備
     const firstCoord = routeCoords[0];
-    const secondCoord = routeCoords[1];
     
     // 最初のbearing（第1→第2ノード方向）を計算
+    // routeCoordsに2つ以上のノードがあることは既に確認済み
+    const secondCoord = routeCoords[1];
     const firstBearing = calculateBearing(
         firstCoord.lng, firstCoord.lat,
         secondCoord.lng, secondCoord.lat
@@ -132,10 +138,16 @@ function playRouteAnimation() {
         if (currentIndex < routeCoords.length - 1) {
             // まだ次のノードがある場合は、その方向を向く
             const nextCoord = routeCoords[currentIndex + 1];
-            nextBearing = calculateBearing(
+            const calculatedBearing = calculateBearing(
                 currentCoord.lng, currentCoord.lat,
                 nextCoord.lng, nextCoord.lat
             );
+            // 座標が同一の場合（NaN対策）は前回のbearingを維持
+            if (isNaN(calculatedBearing)) {
+                nextBearing = map.getBearing();
+            } else {
+                nextBearing = calculatedBearing;
+            }
         } else {
             // 最後のノードの場合は、前回のbearingを維持
             nextBearing = map.getBearing();
