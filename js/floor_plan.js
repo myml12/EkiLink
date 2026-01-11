@@ -301,6 +301,9 @@ function updateDeckLayers(floor) {
     // Facilityレイヤーを更新
     updateFacilityLayer(floor, MapboxLayer);
     
+    // Space Circle レイヤーを更新（ノードの枠線）
+    updateSpaceCircleLayer(floor, MapboxLayer);
+    
     // 経路レイヤーを更新（経路が存在する場合）
     if (routePath && routePath.length > 0) {
         updateRouteLayerForFloor(floor, MapboxLayer);
@@ -537,6 +540,98 @@ function updateFacilityLayer(floor, MapboxLayer) {
         }
     });
     map.addLayer(facilityLayer);
+}
+
+/**
+ * Space Circle レイヤーを更新（ノードの枠線）
+ * @param {number|null} floor - 階層番号（nullの場合は全階層表示）
+ * @param {any} MapboxLayer - MapboxLayer クラス
+ */
+function updateSpaceCircleLayer(floor, MapboxLayer) {
+    if (!map.getLayer('space-circle-layer')) return;
+    
+    // nodeSpaceMapが存在するか確認（map.jsで定義されているグローバル変数）
+    if (typeof nodeSpaceMap === 'undefined') return;
+    
+    // フィルタリングされたノードの枠線データを作成
+    const SPACE_CIRCLE_RADIUS = 1.5;
+    let filteredNodes = nodesData.features;
+    
+    if (floor !== null) {
+        filteredNodes = nodesData.features.filter(f => {
+            const nodeFloor = nodeFloorMap[f.properties.node_id] ?? f.properties.floor;
+            return nodeFloor === floor;
+        });
+    }
+    
+    const spaceCircleData = filteredNodes
+        .filter(f => nodeSpaceMap[f.properties.node_id] !== null && nodeSpaceMap[f.properties.node_id] !== undefined)
+        .map(f => {
+            const nodeFloor = nodeFloorMap[f.properties.node_id] ?? f.properties.floor;
+            let z;
+            if (isFloorPlanView && floor !== null) {
+                z = FLOOR_PLAN_NODE_Z; // フロアプランビューではフラットに表示
+            } else {
+                z = (config.floorOffsets[String(nodeFloor)] ?? 0) + NODE_Z_OFFSET;
+            }
+            const coords = f.geometry.coordinates;
+            const spaceInfo = nodeSpaceMap[f.properties.node_id];
+
+            // Spaceの色を決定（より控えめに）
+            let circleColor = [56, 189, 248, 80]; // デフォルト: スカイブルー（薄く）
+            if (spaceInfo) {
+                if (spaceInfo.category === 'B021') {
+                    circleColor = [255, 138, 101, 80]; // 階段: オレンジ（薄く）
+                } else if (spaceInfo.category === 'B019') {
+                    circleColor = [79, 195, 247, 80]; // 通路: ライトブルー（薄く）
+                } else {
+                    // 階層の色を使用（薄く）
+                    const floorColor = stationLogic.getFloorColor(spaceInfo.floor);
+                    circleColor = [floorColor[0], floorColor[1], floorColor[2], 80];
+                }
+            }
+
+            return {
+                type: 'Feature',
+                geometry: {
+                    type: 'Point',
+                    coordinates: [coords[0], coords[1], z]
+                },
+                properties: {
+                    node_id: f.properties.node_id,
+                    color: circleColor
+                }
+            };
+        });
+    
+    // 既存のレイヤーを削除
+    map.removeLayer('space-circle-layer');
+    
+    // 新しいレイヤーを追加
+    const spaceCircleLayer = new MapboxLayer({
+        id: 'space-circle-layer',
+        type: deck.GeoJsonLayer,
+        data: {
+            type: 'FeatureCollection',
+            features: spaceCircleData
+        },
+        pickable: false,
+        getPointRadius: SPACE_CIRCLE_RADIUS,
+        radiusMinPixels: 4,
+        radiusMaxPixels: 8,
+        getFillColor: [0, 0, 0, 0], // 塗りつぶしなし（透明）
+        stroked: true,
+        getLineColor: (d) => d.properties.color,
+        lineWidthMinPixels: 0.5,
+        lineWidthMaxPixels: 1,
+        parameters: {
+            depthTest: !isFloorPlanView,
+            depthFunc: 519,
+            blend: true,
+            blendFunc: [770, 771, 1, 771]
+        }
+    });
+    map.addLayer(spaceCircleLayer);
 }
 
 /**
