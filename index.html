@@ -37,14 +37,24 @@
     <script src="./js/stations/ueno_okachimachi.js"></script>
 
     <!-- メインJavaScript -->
+    <!-- 依存関係の読み込み順序:
+         1. constants.js - グローバル定数
+         2. utils.js - ユーティリティ関数（calculateDistance等）
+         3. facility.js - 施設関連関数（getFacilityCategoryName等）
+         4. route.js - 経路検索ロジック
+         5. route_animation.js - アニメーション機能
+         6. navigation_modal.js - 道案内モーダル（facility.jsとutils.jsに依存）
+         7. その他のモジュール
+    -->
     <script src="./js/constants.js"></script>
     <script src="./js/utils.js"></script>
+    <script src="./js/facility.js"></script>
     <script src="./js/route.js"></script>
     <script src="./js/route_animation.js"></script>
+    <script src="./js/navigation_modal.js"></script>
     <script src="./js/floor_plan.js"></script>
     <script src="./js/station.js"></script>
     <script src="./js/map.js"></script>
-    <script src="./js/facility.js"></script>
     <script src="./js/info.js"></script>
     <script src="./js/main.js"></script>
 </head>
@@ -175,6 +185,21 @@
     <!-- 空間情報表示エリア（右下） -->
     <div id="space-info-panel" class="space-info-panel" style="display: none;">
         <div id="space-info-content"></div>
+    </div>
+
+    <!-- 道案内モーダルウィンドウ（右側） -->
+    <div id="navigation-modal" class="navigation-modal" style="display: none;">
+        <div class="navigation-modal-header">
+            <h3>道案内</h3>
+            <button id="close-navigation-modal" class="navigation-close-btn" title="閉じる">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                </svg>
+            </button>
+        </div>
+        <div id="navigation-steps" class="navigation-steps">
+            <!-- ナビゲーションステップがここに表示される -->
+        </div>
     </div>
 
     <!-- トースト通知 -->

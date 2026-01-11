@@ -160,6 +160,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     setupRouteSelectionButtons();
     
+    // 道案内モーダルの初期化
+    initNavigationModal();
+    
     // イベントリスナー
     document.getElementById('station-select').addEventListener('change', (e) => {
         switchStation(e.target.value);
