@@ -133,3 +133,18 @@ function showToast(message, duration = 3000) {
     }, duration);
 }
 
+/**
+ * ノードの枠線色を計算（塗りつぶし色より暗い色を返す）
+ * @param {Array} fillColor - RGBA配列 [r, g, b, a]
+ * @returns {Array} 枠線色のRGBA配列
+ */
+const NODE_STROKE_DARKEN_AMOUNT = 30; // 枠線を暗くする量
+function getNodeStrokeColor(fillColor) {
+    return [
+        Math.max(0, fillColor[0] - NODE_STROKE_DARKEN_AMOUNT),
+        Math.max(0, fillColor[1] - NODE_STROKE_DARKEN_AMOUNT),
+        Math.max(0, fillColor[2] - NODE_STROKE_DARKEN_AMOUNT),
+        255
+    ];
+}
+

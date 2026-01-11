@@ -273,7 +273,15 @@ async function setupMap() {
             const floor = nodeFloorMap[d.properties.node_id] ?? d.properties.floor;
             return stationLogic.getFloorColor(floor);
         },
-        stroked: false,
+        stroked: true,
+        getLineColor: (d) => {
+            // 枠線の色を塗りつぶしの色より少し濃くする
+            const floor = nodeFloorMap[d.properties.node_id] ?? d.properties.floor;
+            const fillColor = stationLogic.getFloorColor(floor);
+            return getNodeStrokeColor(fillColor);
+        },
+        lineWidthMinPixels: 1,
+        lineWidthMaxPixels: 2,
         parameters: {
             depthTest: true, // 深度テストを有効化（3D表示）
             depthFunc: 519, // GL_LEQUAL
