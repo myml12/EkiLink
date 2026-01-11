@@ -2,6 +2,11 @@
 // 経路アニメーション機能
 // ============================================================================
 
+// 定数定義
+const EARTH_RADIUS_METERS = 6378137; // 地球の半径（メートル）
+const MAX_SAFE_PITCH_DEG = 85; // 安全な最大ピッチ角度（度）
+const POLAR_REGION_THRESHOLD = 0.000001; // 極点近傍の判定閾値
+
 /**
  * 経路アニメーションを再生（改善版：ズーム・カメラアングル調整あり）
  */
@@ -97,19 +102,18 @@ function playRouteAnimation() {
         
         // 極点近くのチェック（Math.cos(lat)がほぼ0になるのを防ぐ）
         const latCos = Math.cos(lat * Math.PI / 180);
-        if (Math.abs(latCos) < 0.000001) {
+        if (Math.abs(latCos) < POLAR_REGION_THRESHOLD) {
             // 極点付近では補正なしで座標を返す
             return { lng: lng, lat: lat };
         }
         
         const pitchRad = pitch * Math.PI / 180;
         const bearingRad = bearing * Math.PI / 180;
-        const safePitchRad = Math.min(pitchRad, 85 * Math.PI / 180);
+        const safePitchRad = Math.min(pitchRad, MAX_SAFE_PITCH_DEG * Math.PI / 180);
         const offsetDistance = objectHeight * Math.tan(safePitchRad);
-        const R = 6378137; // 地球の半径（メートル）
         
-        const dLat = (offsetDistance * Math.cos(bearingRad)) / R * (180 / Math.PI);
-        const dLng = (offsetDistance * Math.sin(bearingRad)) / (R * latCos) * (180 / Math.PI);
+        const dLat = (offsetDistance * Math.cos(bearingRad)) / EARTH_RADIUS_METERS * (180 / Math.PI);
+        const dLng = (offsetDistance * Math.sin(bearingRad)) / (EARTH_RADIUS_METERS * latCos) * (180 / Math.PI);
         
         return {
             lng: lng + dLng,
