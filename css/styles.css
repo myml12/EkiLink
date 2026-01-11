@@ -769,7 +769,7 @@ b {
     font-weight: 600;
     padding: var(--spacing-md) var(--spacing-xl);
     background: linear-gradient(90deg, rgba(var(--color-primary-rgb), 0.15), rgba(var(--color-primary-rgb), 0.05));
-    border-left: 3px solid var(--color-primary);
+    border-left: none;
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
@@ -859,7 +859,7 @@ b {
     border-radius: var(--radius-sm);
     cursor: pointer;
     transition: var(--transition-fast);
-    border-left: 3px solid var(--color-primary);
+    border-left: none;
     margin-bottom: var(--spacing-xs);
 }
 
