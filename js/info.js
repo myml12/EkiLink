@@ -35,7 +35,7 @@ function showSpaceInfo(props) {
     }
 
     // 名称は空白でない場合のみ表示
-    if (props.name && props.name.trim() !== '') {
+    if (props.name && props.name.trim() !== '' && props.name.trim() !== ' ') {
         html += `<div class="space-name">${props.name.trim()}</div>`;
     }
 
@@ -115,6 +115,10 @@ function showFacilityInfo(feature, lngLat) {
         }
     }
 
+    // 改札口や出口の番号を抽出
+    const name = props.name && props.name.trim() !== '' && props.name.trim() !== ' ' ? props.name.trim() : null;
+    const number = extractFacilityNumber(name, props.category);
+
     let html = '<div class="space-popup">';
     html += '<h3>設備情報</h3>';
 
@@ -125,11 +129,16 @@ function showFacilityInfo(feature, lngLat) {
         html += '</div>';
     }
 
-    // 名称は空白でない場合のみ表示
-    if (props.name && props.name.trim() !== '') {
+    // 番号がある場合は番号を表示、なければ名称を表示
+    if (number) {
+        html += '<div class="info-row">';
+        html += '<span class="info-label">番号:</span>';
+        html += `<span class="info-value">${number}</span>`;
+        html += '</div>';
+    } else if (name) {
         html += '<div class="info-row">';
         html += '<span class="info-label">名称:</span>';
-        html += `<span class="info-value">${props.name.trim()}</span>`;
+        html += `<span class="info-value">${name}</span>`;
         html += '</div>';
     }
 
@@ -137,17 +146,6 @@ function showFacilityInfo(feature, lngLat) {
     html += '<span class="info-label">階層:</span>';
     html += `<span class="info-value">${floorName}</span>`;
     html += '</div>';
-
-    if (props.source) {
-        const sourceText = props.source === '1' ? 'フロアマップ' :
-            props.source === '2' ? 'CAD' :
-                props.source === '3' ? 'BIM' :
-                    props.source === '4' ? '3次元地図' : 'その他';
-        html += '<div class="info-row">';
-        html += '<span class="info-label">データ源:</span>';
-        html += `<span class="info-value">${sourceText}</span>`;
-        html += '</div>';
-    }
 
     html += '</div>';
 
@@ -175,42 +173,38 @@ function showNodeInfo(feature, lngLat) {
     // 駅ごとのロジックを使用して階層名を取得
     const floorName = stationLogic.getFloorName(floor);
 
-    // リンク情報を表示
-    const links = [];
+    // リンク数を計算
+    let linkCount = 0;
     for (let i = 1; i <= 8; i++) {
         const linkId = props[`link${i}_id`];
-        if (linkId && linkId.trim() !== '') {
-            links.push(linkId.substring(0, 8) + '...');
+        if (linkId && linkId.trim() !== '' && linkId.trim() !== ' ') {
+            linkCount++;
         }
     }
 
     let html = '<div class="node-popup">';
-    html += '<h3>ノード情報</h3>';
-    if (props.node_id) {
-        html += '<div class="info-row">';
-        html += '<span class="info-label">ノードID:</span>';
-        html += `<span class="info-value">${props.node_id.substring(0, 8)}...</span>`;
-        html += '</div>';
-    }
+    html += '<h3>ポイント情報</h3>';
+    
     html += '<div class="info-row">';
     html += '<span class="info-label">階層:</span>';
     html += `<span class="info-value">${floorName}</span>`;
     html += '</div>';
+    
     if (props.in_out !== undefined) {
         const inOutText = props.in_out === 1 ? '屋内' :
             props.in_out === 2 ? '屋外' :
-                props.in_out === 3 ? '境界' : '不明';
+                props.in_out === 3 ? '出入口' : '不明';
         html += '<div class="info-row">';
         html += '<span class="info-label">位置:</span>';
         html += `<span class="info-value">${inOutText}</span>`;
         html += '</div>';
     }
 
-    // リンク情報を表示
-    if (links.length > 0) {
+    // リンク情報を表示（件数のみ）
+    if (linkCount > 0) {
         html += '<div class="info-row">';
         html += '<span class="info-label">接続:</span>';
-        html += `<span class="info-value">${links.length}件</span>`;
+        html += `<span class="info-value">${linkCount}方向</span>`;
         html += '</div>';
     }
 

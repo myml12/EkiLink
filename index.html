@@ -91,6 +91,21 @@
                 </svg>
             </button>
         </div>
+        <!-- 選択モード切り替え -->
+        <div class="selection-mode-toggle">
+            <button id="mode-point" class="mode-btn active" title="マップ上のポイントをクリックして選択">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="12" r="8"/>
+                </svg>
+                ポイント
+            </button>
+            <button id="mode-facility" class="mode-btn" title="設備一覧から選択">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                </svg>
+                施設
+            </button>
+        </div>
         <div class="route-control">
             <label style="display: block; margin-bottom: 6px; color: #94a3b8; font-size: 0.85em;">出発点:</label>
             <div class="route-selection">
