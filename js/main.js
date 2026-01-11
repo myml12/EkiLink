@@ -10,6 +10,7 @@ let linksData = null;
 let facilitiesData = {}; // 階層ごとのFacilityデータ
 let floorsData = {}; // 階層ごとのFloorデータ（階層名取得用）
 let nodeFloorMap = {};
+let nodeSpaceMap = {}; // ノードID -> Space情報（色など）
 let currentPopup = null;
 let currentStation = null;
 let stationLogic = null; // 駅ごとのロジック

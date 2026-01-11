@@ -162,7 +162,7 @@ async function setupMap() {
     // ノードの実際の階層を再判定し、どのSpaceに属するかも記録
     // 各ノードの座標がどのSpaceレイヤー（階層）のポリゴン内にあるかを判定
     // 複数の階層に含まれる場合は、元の階層に最も近い階層を選択
-    const nodeSpaceMap = {}; // ノードID -> Space情報（色など）
+    nodeSpaceMap = {}; // ノードID -> Space情報（色など）- グローバル変数として使用
     nodesData.features.forEach(node => {
         const coords = node.geometry.coordinates; // ノードの2D座標 [lng, lat]
         const originalFloor = node.properties.floor; // ノードの元の階層情報
