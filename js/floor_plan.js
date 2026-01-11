@@ -21,7 +21,6 @@ let savedCameraState = null; // 3Dビュー時のカメラ状態を保存
 function setupFloorPlanView() {
     const hierarchyToggle = document.getElementById('hierarchy-display-toggle');
     const floorSelect = document.getElementById('floor-select');
-    const floorSelectorDropdown = document.getElementById('floor-selector-dropdown');
     
     // 階層表示のトグルスイッチ
     if (hierarchyToggle) {
