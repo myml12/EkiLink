@@ -5,6 +5,7 @@
 // 道案内の定数
 const SIGNIFICANT_ANGLE_THRESHOLD = 30; // 重要な曲がり角の角度閾値（度）
 const FACILITY_PROXIMITY_THRESHOLD = 15; // 施設との近接判定距離（メートル）
+const FACILITY_SEARCH_RADIUS = 20; // 道案内で施設を検索する半径（メートル）
 
 /**
  * 方向ベクトル間の角度差を計算（度数）
@@ -103,7 +104,7 @@ function generateNavigationSteps(path) {
         const floorName = stationLogic ? stationLogic.getFloorName(floor) : `階層 ${floor}`;
         
         // 近くの施設を探す
-        const nearbyFacility = findNearestFacilityToNode(nodeId, 20);
+        const nearbyFacility = findNearestFacilityToNode(nodeId, FACILITY_SEARCH_RADIUS);
         
         // 方向を計算
         let direction = null;

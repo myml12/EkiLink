@@ -79,6 +79,32 @@ function playRouteAnimation() {
 }
 
 /**
+ * アニメーションポイントレイヤーの設定を作成
+ */
+function createAnimationPointLayerConfig(pointData) {
+    const MapboxLayer = deck.MapboxLayer || window.MapboxLayer;
+    return new MapboxLayer({
+        id: 'animation-point-layer',
+        type: deck.GeoJsonLayer,
+        data: pointData,
+        pickable: false,
+        getPointRadius: 2.5,
+        radiusMinPixels: 10,
+        radiusMaxPixels: 15,
+        getFillColor: [251, 191, 36, 255], // 黄色
+        stroked: true,
+        getLineColor: [255, 255, 255, 255],
+        lineWidthMinPixels: 2,
+        lineWidthMaxPixels: 3,
+        parameters: {
+            depthTest: false,
+            blend: true,
+            blendFunc: [770, 771, 1, 771]
+        }
+    });
+}
+
+/**
  * アニメーションポイントレイヤーを追加
  */
 function addAnimationPointLayer() {
@@ -105,28 +131,7 @@ function addAnimationPointLayer() {
         }]
     };
 
-    const MapboxLayer = deck.MapboxLayer || window.MapboxLayer;
-    const animationLayer = new MapboxLayer({
-        id: 'animation-point-layer',
-        type: deck.GeoJsonLayer,
-        data: pointData,
-        pickable: false,
-        getPointRadius: 2.5,
-        radiusMinPixels: 10,
-        radiusMaxPixels: 15,
-        getFillColor: [251, 191, 36, 255], // 黄色
-        stroked: true,
-        getLineColor: [255, 255, 255, 255],
-        lineWidthMinPixels: 2,
-        lineWidthMaxPixels: 3,
-        parameters: {
-            depthTest: false,
-            blend: true,
-            blendFunc: [770, 771, 1, 771]
-        }
-    });
-
-    map.addLayer(animationLayer);
+    map.addLayer(createAnimationPointLayerConfig(pointData));
 }
 
 /**
@@ -185,32 +190,13 @@ function animatePoint() {
     };
 
     // レイヤーを更新
+    // Note: deck.gl MapboxLayer does not support data updates without recreation
+    // This is a known limitation of the library in version 8.x
     if (map.getLayer('animation-point-layer')) {
         map.removeLayer('animation-point-layer');
     }
 
-    const MapboxLayer = deck.MapboxLayer || window.MapboxLayer;
-    const animationLayer = new MapboxLayer({
-        id: 'animation-point-layer',
-        type: deck.GeoJsonLayer,
-        data: pointData,
-        pickable: false,
-        getPointRadius: 2.5,
-        radiusMinPixels: 10,
-        radiusMaxPixels: 15,
-        getFillColor: [251, 191, 36, 255],
-        stroked: true,
-        getLineColor: [255, 255, 255, 255],
-        lineWidthMinPixels: 2,
-        lineWidthMaxPixels: 3,
-        parameters: {
-            depthTest: false,
-            blend: true,
-            blendFunc: [770, 771, 1, 771]
-        }
-    });
-
-    map.addLayer(animationLayer);
+    map.addLayer(createAnimationPointLayerConfig(pointData));
 
     // 次のフレームをスケジュール
     animationState.animationId = requestAnimationFrame(animatePoint);
