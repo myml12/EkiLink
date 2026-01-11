@@ -5,6 +5,11 @@
 // 現在ハイライト表示されているスペースの情報を保持
 let highlightedSpaceFeature = null;
 
+// スペースハイライトの表示設定
+const SPACE_HIGHLIGHT_COLOR = '#38bdf8';  // スカイブルー
+const SPACE_HIGHLIGHT_WIDTH = 3;           // 枠線の幅（px）
+const SPACE_HIGHLIGHT_OPACITY = 0.9;       // 不透明度
+
 /**
  * Space情報を右下に表示する関数
  * @param {Object} props - Spaceのproperties
@@ -92,14 +97,6 @@ function highlightSpaceFeature(feature) {
     const highlightSourceId = 'space-highlight-source';
     const highlightLayerId = 'space-highlight-layer';
 
-    // ソースが既に存在する場合は削除
-    if (map.getSource(highlightSourceId)) {
-        if (map.getLayer(highlightLayerId)) {
-            map.removeLayer(highlightLayerId);
-        }
-        map.removeSource(highlightSourceId);
-    }
-
     // 新しいソースを追加
     map.addSource(highlightSourceId, {
         type: 'geojson',
@@ -115,9 +112,9 @@ function highlightSpaceFeature(feature) {
         type: 'line',
         source: highlightSourceId,
         paint: {
-            'line-color': '#38bdf8', // スカイブルー
-            'line-width': 3,
-            'line-opacity': 0.9
+            'line-color': SPACE_HIGHLIGHT_COLOR,
+            'line-width': SPACE_HIGHLIGHT_WIDTH,
+            'line-opacity': SPACE_HIGHLIGHT_OPACITY
         }
     });
 }
