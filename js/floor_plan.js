@@ -10,6 +10,10 @@ const FLOOR_PLAN_LINK_Z = 0.3;             // フロアプランビューでの�
 const FLOOR_PLAN_ROUTE_Z = 0.6;            // フロアプランビューでの経路Z座標
 const FLOOR_PLAN_FACILITY_Z = 0.8;         // フロアプランビューでの設備Z座標
 
+// Space レイヤーの不透明度定数
+const SPACE_NORMAL_OPACITY = 0.45;         // 通常の不透明度（選択された階層）
+const SPACE_REDUCED_OPACITY = 0.15;        // 低い不透明度（非選択の階層、枠線のみ見える）
+
 // フロアプランビューの状態
 let isFloorPlanView = false;
 let selectedFloor = null; // 選択された階層（null = 全階層表示）
@@ -188,7 +192,7 @@ function showAllFloors() {
             // 3D表示に戻す
             map.setPaintProperty(layerId, 'fill-extrusion-base', f.offset);
             map.setPaintProperty(layerId, 'fill-extrusion-height', f.offset + SPACE_HEIGHT);
-            map.setPaintProperty(layerId, 'fill-extrusion-opacity', 0.45); // 通常の不透明度に戻す
+            map.setPaintProperty(layerId, 'fill-extrusion-opacity', SPACE_NORMAL_OPACITY); // 通常の不透明度に戻す
         }
     });
     
@@ -218,7 +222,7 @@ function showSingleFloor(floor, floorId) {
             map.setPaintProperty(layerId, 'fill-extrusion-height', FLOOR_PLAN_EXTRUSION_HEIGHT);
             
             // 選択された階層は通常の不透明度、非選択階層は薄く表示
-            const opacity = isSelected ? 0.45 : 0.15;
+            const opacity = isSelected ? SPACE_NORMAL_OPACITY : SPACE_REDUCED_OPACITY;
             map.setPaintProperty(layerId, 'fill-extrusion-opacity', opacity);
         }
     });
