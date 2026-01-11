@@ -219,7 +219,7 @@ function selectFloor(floor, floorId = null) {
             floorIndicator.textContent = `📍 ${floorName}`;
             floorIndicator.classList.add('show');
         }
-        // モーダルは開いたままにする（別の階層を選択しやすくするため）
+        // モーダルは開いたままにする（ユーザーが複数の階層を簡単に比較できるようにするため）
         // トーストで通知
         showToast(`${stationLogic.getFloorName(floor)}を表示中です`);
     }
