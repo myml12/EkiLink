@@ -342,8 +342,8 @@ async function switchStation(stationId) {
                         return;
                     }
 
-                    // 通常モードの場合 (右下に小さく軽めに表示)
-                    showSpaceInfo(spaceFeature.properties, spaceFeature);
+                    // 通常モードの場合 (ポップアップで表示)
+                    showSpaceInfo(spaceFeature.properties, spaceFeature, e.lngLat.toArray());
                 }
             } catch (err) {
                 // レイヤーが存在しない場合はエラーを無視

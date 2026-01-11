@@ -8,22 +8,14 @@ const SPACE_HIGHLIGHT_WIDTH = 3;              // Border width (px)
 const SPACE_HIGHLIGHT_OPACITY = 0.9;          // Opacity
 const SPACE_HIGHLIGHT_SOURCE_ID = 'space-highlight-source';
 const SPACE_HIGHLIGHT_LAYER_ID = 'space-highlight-layer';
-const SPACE_INFO_DISPLAY_DURATION = 3000;     // Display duration (ms)
 
 /**
- * Space情報を右下に表示する関数
+ * Space情報をポップアップ表示する関数
  * @param {Object} props - Spaceのproperties
  * @param {Object} [feature=null] - SpaceのGeoJSON feature（ハイライト表示用、省略時はハイライト無効）
+ * @param {Array<number>} [lngLat=null] - クリックされた位置の座標 [経度, 緯度]
  */
-function showSpaceInfo(props, feature = null) {
-    const panel = document.getElementById('space-info-panel');
-    const content = document.getElementById('space-info-content');
-
-    if (!panel || !content) {
-        console.warn('空間情報パネルの要素が見つかりません');
-        return;
-    }
-
+function showSpaceInfo(props, feature = null, lngLat = null) {
     // categoryコードの意味を取得（categories.jsonから）
     const getCategoryName = (category) => {
         if (!category) return category;
@@ -37,47 +29,52 @@ function showSpaceInfo(props, feature = null) {
         return category;
     };
 
-    let html = '';
+    let html = '<div class="space-popup">';
+    html += '<h3>空間情報</h3>';
 
     if (props.category) {
-        html += `<div class="space-category">${getCategoryName(props.category)}</div>`;
+        html += '<div class="info-row">';
+        html += '<span class="info-label">種別:</span>';
+        html += `<span class="info-value">${getCategoryName(props.category)}</span>`;
+        html += '</div>';
     }
 
     // 名称は空白でない場合のみ表示
     if (props.name && props.name.trim() !== '') {
-        html += `<div class="space-name">${props.name.trim()}</div>`;
+        html += '<div class="info-row">';
+        html += '<span class="info-label">名称:</span>';
+        html += `<span class="info-value">${props.name.trim()}</span>`;
+        html += '</div>';
     }
 
-    content.innerHTML = html;
+    html += '</div>';
 
     // ハイライト表示を追加
     if (feature) {
         highlightSpaceFeature(feature);
     }
 
-    // 既存のタイマーをクリア
-    if (showSpaceInfo.timeoutId) {
-        clearTimeout(showSpaceInfo.timeoutId);
-    }
+    // ポップアップを表示
+    if (lngLat && map) {
+        // 既存のポップアップを削除
+        if (currentPopup) {
+            currentPopup.remove();
+        }
 
-    // 表示アニメーション
-    panel.style.display = 'block';
-    // 次のフレームでアニメーションを開始
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            panel.classList.add('show');
-        });
-    });
+        currentPopup = new maplibregl.Popup({
+            closeButton: true,
+            className: 'space-info-popup',
+            offset: [0, -10]
+        })
+            .setLngLat(lngLat)
+            .setHTML(html)
+            .addTo(map);
 
-    // 指定時間後に自動的に非表示
-    showSpaceInfo.timeoutId = setTimeout(() => {
-        panel.classList.remove('show');
-        setTimeout(() => {
-            panel.style.display = 'none';
-            // ハイライトも削除
+        // ポップアップが閉じられたときにハイライトも削除
+        currentPopup.on('close', () => {
             removeSpaceHighlight();
-        }, 300);
-    }, SPACE_INFO_DISPLAY_DURATION);
+        });
+    }
 }
 
 /**
@@ -85,10 +82,27 @@ function showSpaceInfo(props, feature = null) {
  * @param {Object} feature - SpaceのGeoJSON feature
  */
 function highlightSpaceFeature(feature) {
-    if (!map) return;
+    if (!map || !config) return;
 
     // 既存のハイライトを削除
     removeSpaceHighlight();
+
+    // クリックされたスペースの階層を特定
+    // feature.layer.idから階層IDを抽出 (例: "space-layer-B1F" -> "B1F")
+    let floorId = null;
+    let floorOffset = 0;
+    
+    if (feature.layer && feature.layer.id) {
+        const match = feature.layer.id.match(/space-layer-(.+)/);
+        if (match) {
+            floorId = match[1];
+            // config.floorsから該当する階層の設定を取得
+            const floorConfig = config.floors.find(f => f.id === floorId);
+            if (floorConfig) {
+                floorOffset = floorConfig.offset;
+            }
+        }
+    }
 
     try {
         // 新しいソースを追加
@@ -102,18 +116,35 @@ function highlightSpaceFeature(feature) {
             });
         }
 
-        // ハイライトレイヤーを追加（枠線のみ）
+        // ハイライトレイヤーを追加（fill-extrusionを使用して3D空間に配置）
         if (!map.getLayer(SPACE_HIGHLIGHT_LAYER_ID)) {
             map.addLayer({
                 id: SPACE_HIGHLIGHT_LAYER_ID,
-                type: 'line',
+                type: 'fill-extrusion',
                 source: SPACE_HIGHLIGHT_SOURCE_ID,
                 paint: {
-                    'line-color': SPACE_HIGHLIGHT_COLOR,
-                    'line-width': SPACE_HIGHLIGHT_WIDTH,
-                    'line-opacity': SPACE_HIGHLIGHT_OPACITY
+                    'fill-extrusion-color': SPACE_HIGHLIGHT_COLOR,
+                    'fill-extrusion-opacity': 0.0, // 塗りつぶしは透明
+                    'fill-extrusion-base': floorOffset,
+                    'fill-extrusion-height': floorOffset + SPACE_HEIGHT,
+                    // 枠線を表示するために線の色と幅を設定
+                    'fill-extrusion-vertical-gradient': false
                 }
             });
+            
+            // 枠線用の追加レイヤー（lineレイヤーを同じ位置に追加）
+            if (!map.getLayer(SPACE_HIGHLIGHT_LAYER_ID + '-outline')) {
+                map.addLayer({
+                    id: SPACE_HIGHLIGHT_LAYER_ID + '-outline',
+                    type: 'line',
+                    source: SPACE_HIGHLIGHT_SOURCE_ID,
+                    paint: {
+                        'line-color': SPACE_HIGHLIGHT_COLOR,
+                        'line-width': SPACE_HIGHLIGHT_WIDTH,
+                        'line-opacity': SPACE_HIGHLIGHT_OPACITY
+                    }
+                });
+            }
         }
     } catch (error) {
         console.warn('スペースハイライトの追加に失敗しました:', error);
@@ -128,6 +159,9 @@ function removeSpaceHighlight() {
 
     try {
         // レイヤーとソースを削除
+        if (map.getLayer(SPACE_HIGHLIGHT_LAYER_ID + '-outline')) {
+            map.removeLayer(SPACE_HIGHLIGHT_LAYER_ID + '-outline');
+        }
         if (map.getLayer(SPACE_HIGHLIGHT_LAYER_ID)) {
             map.removeLayer(SPACE_HIGHLIGHT_LAYER_ID);
         }
