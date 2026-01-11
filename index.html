@@ -37,6 +37,15 @@
     <script src="./js/stations/ueno_okachimachi.js"></script>
 
     <!-- メインJavaScript -->
+    <!-- 依存関係の読み込み順序:
+         1. constants.js - グローバル定数
+         2. utils.js - ユーティリティ関数（calculateDistance等）
+         3. facility.js - 施設関連関数（getFacilityCategoryName等）
+         4. route.js - 経路検索ロジック
+         5. route_animation.js - アニメーション機能
+         6. navigation_modal.js - 道案内モーダル（facility.jsとutils.jsに依存）
+         7. その他のモジュール
+    -->
     <script src="./js/constants.js"></script>
     <script src="./js/utils.js"></script>
     <script src="./js/facility.js"></script>

@@ -1346,10 +1346,28 @@ b {
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
     .navigation-modal {
-        width: calc(100vw - 30px);
-        max-width: 400px;
+        width: calc(100vw - 100px);
+        max-width: 320px;
         right: 15px;
         top: 15px;
+        max-height: 60vh;
+    }
+    
+    .navigation-steps {
+        padding: 12px 14px;
+    }
+    
+    .navigation-step {
+        padding: 10px;
+        margin-bottom: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .navigation-modal {
+        width: calc(100vw - 80px);
+        max-width: 280px;
+        max-height: 50vh;
     }
 }
 
