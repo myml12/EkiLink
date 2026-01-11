@@ -2,9 +2,6 @@
 // 情報表示機能
 // ============================================================================
 
-// 現在ハイライト表示されているスペースの情報を保持
-let highlightedSpaceFeature = null;
-
 // スペースハイライトの表示設定
 const SPACE_HIGHLIGHT_COLOR = '#38bdf8';  // スカイブルー
 const SPACE_HIGHLIGHT_WIDTH = 3;           // 枠線の幅（px）
@@ -90,9 +87,6 @@ function highlightSpaceFeature(feature) {
     // 既存のハイライトを削除
     removeSpaceHighlight();
 
-    // 新しいハイライトを保存
-    highlightedSpaceFeature = feature;
-
     // ハイライト用のソースとレイヤーを追加
     const highlightSourceId = 'space-highlight-source';
     const highlightLayerId = 'space-highlight-layer';
@@ -135,8 +129,6 @@ function removeSpaceHighlight() {
     if (map.getSource(highlightSourceId)) {
         map.removeSource(highlightSourceId);
     }
-
-    highlightedSpaceFeature = null;
 }
 
 /**
