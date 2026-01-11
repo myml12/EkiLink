@@ -56,6 +56,9 @@ async function switchStation(stationId) {
     const wasFacilityListOpen = facilityListPanel &&
         window.getComputedStyle(facilityListPanel).display !== 'none';
 
+    // 施設選択パネルを閉じる
+    closeFacilitySelectPanel();
+
     // 既存のレイヤーとソースを削除
     if (map) {
         // 経路をクリア
@@ -72,10 +75,10 @@ async function switchStation(stationId) {
             }
         });
 
-        // Spaceレイヤーとソースを削除
+        // Spaceレイヤーとアウトラインレイヤーとソースを削除
         const layers = map.getStyle().layers.map(l => l.id);
         layers.forEach(id => {
-            if (id !== 'background' && id.startsWith('space-layer-')) {
+            if (id !== 'background' && (id.startsWith('space-layer-') || id.startsWith('space-outline-'))) {
                 try {
                     if (map.getLayer(id)) {
                         map.removeLayer(id);
@@ -195,14 +198,17 @@ async function switchStation(stationId) {
                     {
                         id: 'background',
                         type: 'background',
-                        paint: { 'background-color': '#0b0f1a' }
+                        paint: { 'background-color': '#0a0e17' } // よりダークな背景色
                     },
                     {
                         id: 'carto-dark-layer',
                         type: 'raster',
                         source: 'carto-dark',
                         minzoom: 0,
-                        maxzoom: 22
+                        maxzoom: 22,
+                        paint: {
+                            'raster-opacity': 0.4 // 地図を透過して地下感を演出
+                        }
                     }
                 ]
             },

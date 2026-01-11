@@ -110,6 +110,8 @@ async function setupMap() {
         }
 
         map.addSource(`space-src-${f.id}`, { type: 'geojson', data: data });
+        
+        // 施設境界をより明確にするため、fill-extrusionの枠線効果を改善
         map.addLayer({
             id: `space-layer-${f.id}`,
             type: 'fill-extrusion',
@@ -119,11 +121,34 @@ async function setupMap() {
                     'match', ['get', 'category'],
                     'B021', '#ff8a65', // 階段
                     'B019', '#4fc3f7', // 通路
+                    'B028', '#fbbf24', // プラットホーム
+                    'B029', '#60a5fa', // 通路/コンコース
+                    'B022', '#a78bfa', // エレベーター
+                    'B023', '#34d399', // エスカレーター
                     config.floorColors[f.id]
                 ],
                 'fill-extrusion-base': f.offset,
                 'fill-extrusion-height': f.offset + SPACE_HEIGHT,
-                'fill-extrusion-opacity': 0.35
+                'fill-extrusion-opacity': 0.45 // 不透明度を上げて境界を明確に
+            }
+        });
+
+        // 施設境界線レイヤーを追加（境界をより明確にする）
+        map.addLayer({
+            id: `space-outline-${f.id}`,
+            type: 'line',
+            source: `space-src-${f.id}`,
+            paint: {
+                'line-color': [
+                    'match', ['get', 'category'],
+                    'B021', '#ff6b35', // 階段
+                    'B019', '#0ea5e9', // 通路
+                    'B028', '#f59e0b', // プラットホーム
+                    'B029', '#3b82f6', // 通路/コンコース
+                    '#64748b' // デフォルト
+                ],
+                'line-width': 1.5,
+                'line-opacity': 0.7
             }
         });
 

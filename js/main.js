@@ -24,6 +24,9 @@ let routeSelectionMode = null; // 'start' | 'end' | null
 let routeLayer = null; // 経路表示レイヤー
 let selectedNodesLayer = null; // 選択されたノード表示レイヤー
 
+// 選択モード: 'point' | 'facility'
+let selectionInputMode = 'point';
+
 // ============================================================================
 // 初期化
 // ============================================================================
@@ -53,6 +56,30 @@ function setupFacilityListToggle() {
     }
 }
 
+// 選択モード切り替えのセットアップ
+function setupSelectionModeToggle() {
+    const modePointBtn = document.getElementById('mode-point');
+    const modeFacilityBtn = document.getElementById('mode-facility');
+
+    if (modePointBtn) {
+        modePointBtn.addEventListener('click', () => {
+            selectionInputMode = 'point';
+            modePointBtn.classList.add('active');
+            modeFacilityBtn.classList.remove('active');
+            // 施設選択パネルを閉じる
+            closeFacilitySelectPanel();
+        });
+    }
+
+    if (modeFacilityBtn) {
+        modeFacilityBtn.addEventListener('click', () => {
+            selectionInputMode = 'facility';
+            modeFacilityBtn.classList.add('active');
+            modePointBtn.classList.remove('active');
+        });
+    }
+}
+
 // DOMContentLoadedイベントを待ってから初期化
 document.addEventListener('DOMContentLoaded', async () => {
     // カテゴリーデータを読み込む
@@ -71,6 +98,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('カテゴリーデータの読み込みエラー:', e);
     }
     setupFacilityListToggle();
+    setupSelectionModeToggle();
+    
     // イベントリスナー
     document.getElementById('station-select').addEventListener('change', (e) => {
         switchStation(e.target.value);
@@ -81,10 +110,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (routeSelectionMode === 'start') {
             routeSelectionMode = null;
             document.getElementById('select-start').classList.remove('active');
+            closeFacilitySelectPanel();
         } else {
             routeSelectionMode = 'start';
             document.getElementById('select-start').classList.add('active');
             document.getElementById('select-end').classList.remove('active');
+            
+            // 施設モードの場合は施設選択パネルを表示
+            if (selectionInputMode === 'facility') {
+                showFacilitySelectPanel('start');
+            } else {
+                showToast('マップ上のポイントをタップしてください');
+            }
         }
     });
 
@@ -92,15 +129,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (routeSelectionMode === 'end') {
             routeSelectionMode = null;
             document.getElementById('select-end').classList.remove('active');
+            closeFacilitySelectPanel();
         } else {
             routeSelectionMode = 'end';
             document.getElementById('select-end').classList.add('active');
             document.getElementById('select-start').classList.remove('active');
+            
+            // 施設モードの場合は施設選択パネルを表示
+            if (selectionInputMode === 'facility') {
+                showFacilitySelectPanel('end');
+            } else {
+                showToast('マップ上のポイントをタップしてください');
+            }
         }
     });
 
     document.getElementById('clear-route').addEventListener('click', () => {
         clearRoute();
+        closeFacilitySelectPanel();
     });
 
     // 経路アニメーション再生ボタンのイベントリスナー

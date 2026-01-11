@@ -119,14 +119,21 @@ function handleRouteNodeSelection(node) {
     const floor = nodeFloorMap[nodeId] ?? node.properties.floor;
     const floorName = stationLogic.getFloorName(floor);
 
+    // 位置情報を取得
+    const inOutText = node.properties.in_out === 1 ? '屋内' :
+        node.properties.in_out === 2 ? '屋外' :
+            node.properties.in_out === 3 ? '出入口付近' : '';
+    
+    const displayText = inOutText ? `${inOutText} (${floorName})` : `ポイント (${floorName})`;
+
     if (routeSelectionMode === 'start') {
         routeStartNode = nodeId;
-        document.getElementById('start-info').textContent = `Node (${floorName})`;
+        document.getElementById('start-info').textContent = displayText;
         document.getElementById('select-start').classList.remove('active');
         routeSelectionMode = null;
     } else if (routeSelectionMode === 'end') {
         routeEndNode = nodeId;
-        document.getElementById('end-info').textContent = `Node (${floorName})`;
+        document.getElementById('end-info').textContent = displayText;
         document.getElementById('select-end').classList.remove('active');
         routeSelectionMode = null;
     }
