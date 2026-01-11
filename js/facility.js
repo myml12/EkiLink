@@ -120,7 +120,7 @@ function showFacilityList() {
     sortedFloors.forEach(floorKey => {
         const floorData = facilitiesByFloor[floorKey];
         html += `<div class="facility-list-floor">`;
-        html += `<div class="facility-list-floor-title">${floorData.floorName} (${floorData.facilities.length}件)</div>`;
+        html += `<div class="facility-list-floor-title">${floorData.floorName} <span style="font-weight: normal; opacity: 0.7; font-size: 0.85em;">(${floorData.facilities.length}件)</span></div>`;
 
         // カテゴリごとにグループ化
         const facilitiesByCategory = {};
@@ -218,14 +218,15 @@ function showFacilitySelectPanel(selectionType) {
     let html = '<div class="facility-select-panel" id="facility-select-panel">';
     html += '<div class="facility-select-header">';
     html += `<h3>施設を選択 <span class="selection-type ${selectionType === 'end' ? 'end' : ''}">${selectionType === 'start' ? '出発点' : '到着点'}</span></h3>`;
-    html += '<button class="close-btn" onclick="closeFacilitySelectPanel()">×</button>';
+    html += '<button class="close-btn" onclick="closeFacilitySelectPanel(); clearSelectionButtonsActive();">×</button>';
     html += '</div>';
     html += '<div class="facility-select-content">';
 
     sortedFloors.forEach(floorKey => {
         const floorData = facilitiesByFloor[floorKey];
         html += `<div class="facility-select-floor">`;
-        html += `<div class="facility-select-floor-title">${floorData.floorName}</div>`;
+        html += `<div class="facility-select-floor-title">${floorData.floorName} <span style="font-weight: normal; opacity: 0.7; font-size: 0.85em;">(${floorData.facilities.length}件)</span></div>`;
+        html += `<div class="facility-select-floor-items">`;
 
         // カテゴリごとにグループ化
         const facilitiesByCategory = {};
@@ -259,7 +260,7 @@ function showFacilitySelectPanel(selectionType) {
             });
         });
 
-        html += `</div>`;
+        html += `</div></div>`;
     });
 
     html += '</div></div>';
@@ -322,14 +323,15 @@ function selectFacilityForRoute(facilityId, floorId, selectionType) {
     if (selectionType === 'start') {
         routeStartNode = nodeId;
         document.getElementById('start-info').textContent = `${displayName} (${floorName})`;
-        document.getElementById('select-start').classList.remove('active');
+        clearSelectionButtonsActive();
     } else {
         routeEndNode = nodeId;
         document.getElementById('end-info').textContent = `${displayName} (${floorName})`;
-        document.getElementById('select-end').classList.remove('active');
+        clearSelectionButtonsActive();
     }
 
     routeSelectionMode = null;
+    routeSelectionInputMode = null;
     closeFacilitySelectPanel();
 
     // 選択ノードレイヤーを更新
