@@ -1,11 +1,13 @@
 // ============================================================================
 // 経路アニメーション機能
+// 
+// 依存: utils.js (getNodeStrokeColor), constants.js (NODE_Z_OFFSET, LINK_Z_OFFSET)
 // ============================================================================
 
 // アニメーション定数
 const ANIMATION_DURATION_MS = 3000; // アニメーション全体の長さ（ミリ秒）
-const DIMMED_OPACITY = 80; // 非アクティブな階層の透明度
-const ACTIVE_OPACITY = 255; // アクティブな階層の透明度
+const DIMMED_OPACITY = 80; // 非アクティブな階層の透明度（0-255、約31%）
+const ACTIVE_OPACITY = 255; // アクティブな階層の透明度（0-255、100%）
 
 // アニメーション状態の管理
 let animationState = {
@@ -190,8 +192,8 @@ function animatePoint() {
     };
 
     // レイヤーを更新
-    // Note: deck.gl MapboxLayer does not support data updates without recreation
-    // This is a known limitation of the library in version 8.x
+    // Note: deck.gl MapboxLayer requires layer recreation for data updates.
+    // This is necessary for compatibility with the current implementation.
     if (map.getLayer('animation-point-layer')) {
         map.removeLayer('animation-point-layer');
     }

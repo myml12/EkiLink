@@ -22,6 +22,11 @@ function calculateAngleDifference(angle1, angle2) {
  * ノードが重要なポイントかどうかを判定
  */
 function isSignificantWaypoint(prevNode, currentNode, nextNode, currentFloor, nextFloor) {
+    // ノードの妥当性チェック
+    if (!currentNode || !currentNode.properties) {
+        return false;
+    }
+    
     // 階層変更がある場合は重要
     if (currentFloor !== nextFloor) {
         return true;
