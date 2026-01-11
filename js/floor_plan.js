@@ -213,17 +213,13 @@ function showSingleFloor(floor, floorId) {
             // 全ての階層を表示
             map.setLayoutProperty(layerId, 'visibility', 'visible');
             
-            if (isSelected) {
-                // 選択された階層はフラットに表示（通常の不透明度）
-                map.setPaintProperty(layerId, 'fill-extrusion-base', FLOOR_PLAN_EXTRUSION_BASE);
-                map.setPaintProperty(layerId, 'fill-extrusion-height', FLOOR_PLAN_EXTRUSION_HEIGHT);
-                map.setPaintProperty(layerId, 'fill-extrusion-opacity', 0.45); // 通常の不透明度
-            } else {
-                // 選択されていない階層は薄く表示（枠線のみ見える程度）
-                map.setPaintProperty(layerId, 'fill-extrusion-base', FLOOR_PLAN_EXTRUSION_BASE);
-                map.setPaintProperty(layerId, 'fill-extrusion-height', FLOOR_PLAN_EXTRUSION_HEIGHT);
-                map.setPaintProperty(layerId, 'fill-extrusion-opacity', 0.15); // 薄く表示
-            }
+            // フロアプランビューではフラットに表示
+            map.setPaintProperty(layerId, 'fill-extrusion-base', FLOOR_PLAN_EXTRUSION_BASE);
+            map.setPaintProperty(layerId, 'fill-extrusion-height', FLOOR_PLAN_EXTRUSION_HEIGHT);
+            
+            // 選択された階層は通常の不透明度、非選択階層は薄く表示
+            const opacity = isSelected ? 0.45 : 0.15;
+            map.setPaintProperty(layerId, 'fill-extrusion-opacity', opacity);
         }
     });
     
