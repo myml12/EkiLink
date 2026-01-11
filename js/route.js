@@ -348,9 +348,15 @@ function updateRouteSearchButton() {
 function updateSelectedNodesLayer() {
     const selectedFeatures = [];
 
+    const shouldShowOnFloor = (node) => {
+        if (!isFloorPlanView || selectedFloor === null) return true;
+        const floor = nodeFloorMap[node.properties.node_id] ?? node.properties.floor;
+        return floor === selectedFloor;
+    };
+
     if (routeStartNode) {
         const startNode = nodesData.features.find(n => n.properties.node_id === routeStartNode);
-        if (startNode) {
+        if (startNode && shouldShowOnFloor(startNode)) {
             const coords = startNode.properties._originalCoords ||
                 (startNode.geometry.coordinates.length >= 2 ?
                     [startNode.geometry.coordinates[0], startNode.geometry.coordinates[1]] :
@@ -372,7 +378,7 @@ function updateSelectedNodesLayer() {
 
     if (routeEndNode) {
         const endNode = nodesData.features.find(n => n.properties.node_id === routeEndNode);
-        if (endNode) {
+        if (endNode && shouldShowOnFloor(endNode)) {
             const coords = endNode.properties._originalCoords ||
                 (endNode.geometry.coordinates.length >= 2 ?
                     [endNode.geometry.coordinates[0], endNode.geometry.coordinates[1]] :
@@ -534,6 +540,11 @@ function drawRoute(path) {
             }
         });
         map.addLayer(newRouteLayer);
+
+        // 階層別表示中は選択階層のみ経路を表示
+        if (typeof updateRouteLayerForFloor === 'function' && isFloorPlanView && selectedFloor !== null) {
+            updateRouteLayerForFloor(selectedFloor, MapboxLayer);
+        }
     }
 }
 

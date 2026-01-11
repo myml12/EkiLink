@@ -176,6 +176,11 @@ function selectFloor(floor, floorId = null) {
         const floorName = stationLogic.getFloorName(floor);
         showToast(`${floorName}を表示中です`);
     }
+
+    // 始点・終点ノードの表示を階層に合わせて更新
+    if (typeof updateSelectedNodesLayer === 'function') {
+        updateSelectedNodesLayer();
+    }
 }
 
 /**
