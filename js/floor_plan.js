@@ -2,6 +2,14 @@
 // フロアプランビュー機能
 // ============================================================================
 
+// フロアプランビューの定数
+const FLOOR_PLAN_EXTRUSION_BASE = 0;       // フロアプランビューでのSpace高さベース
+const FLOOR_PLAN_EXTRUSION_HEIGHT = 0.1;   // フロアプランビューでのSpace高さ
+const FLOOR_PLAN_NODE_Z = 0.5;             // フロアプランビューでのノードZ座標
+const FLOOR_PLAN_LINK_Z = 0.3;             // フロアプランビューでのリンクZ座標
+const FLOOR_PLAN_ROUTE_Z = 0.6;            // フロアプランビューでの経路Z座標
+const FLOOR_PLAN_FACILITY_Z = 0.8;         // フロアプランビューでの設備Z座標
+
 // フロアプランビューの状態
 let isFloorPlanView = false;
 let selectedFloor = null; // 選択された階層（null = 全階層表示）
@@ -185,13 +193,16 @@ function selectFloor(floor, floorId = null) {
 function showAllFloors() {
     if (!map || !config) return;
     
-    // 全てのSpaceレイヤーを表示
+    // 全てのSpaceレイヤーを表示し、3D表示に戻す
     config.floors.forEach(f => {
         const layerId = `space-layer-${f.id}`;
         const outlineId = `space-outline-${f.id}`;
         
         if (map.getLayer(layerId)) {
             map.setLayoutProperty(layerId, 'visibility', 'visible');
+            // 3D表示に戻す
+            map.setPaintProperty(layerId, 'fill-extrusion-base', f.offset);
+            map.setPaintProperty(layerId, 'fill-extrusion-height', f.offset + SPACE_HEIGHT);
         }
         if (map.getLayer(outlineId)) {
             map.setLayoutProperty(outlineId, 'visibility', 'visible');
@@ -210,7 +221,7 @@ function showAllFloors() {
 function showSingleFloor(floor, floorId) {
     if (!map || !config) return;
     
-    // 選択された階層のSpaceレイヤーのみ表示
+    // 選択された階層のSpaceレイヤーのみ表示し、フラットに表示
     config.floors.forEach(f => {
         const layerId = `space-layer-${f.id}`;
         const outlineId = `space-outline-${f.id}`;
@@ -218,6 +229,11 @@ function showSingleFloor(floor, floorId) {
         
         if (map.getLayer(layerId)) {
             map.setLayoutProperty(layerId, 'visibility', isSelected ? 'visible' : 'none');
+            if (isSelected) {
+                // フロアプランビューではフラットに表示
+                map.setPaintProperty(layerId, 'fill-extrusion-base', FLOOR_PLAN_EXTRUSION_BASE);
+                map.setPaintProperty(layerId, 'fill-extrusion-height', FLOOR_PLAN_EXTRUSION_HEIGHT);
+            }
         }
         if (map.getLayer(outlineId)) {
             map.setLayoutProperty(outlineId, 'visibility', isSelected ? 'visible' : 'none');
@@ -301,7 +317,7 @@ function updateNodeLayer(floor, MapboxLayer) {
                 const nodeFloor = nodeFloorMap[f.properties.node_id] ?? f.properties.floor;
                 let z;
                 if (isFloorPlanView && floor !== null) {
-                    z = 0.5; // フロアプランビューではフラットに表示
+                    z = FLOOR_PLAN_NODE_Z; // フロアプランビューではフラットに表示
                 } else {
                     z = (config.floorOffsets[String(nodeFloor)] ?? 0) + NODE_Z_OFFSET;
                 }
@@ -361,8 +377,8 @@ function updateLinkLayer(floor, MapboxLayer) {
                     const endFloor = nodeFloorMap[f.properties.end_id];
                     let startZ, endZ;
                     if (isFloorPlanView && floor !== null) {
-                        startZ = 0.3;
-                        endZ = 0.3;
+                        startZ = FLOOR_PLAN_LINK_Z;
+                        endZ = FLOOR_PLAN_LINK_Z;
                     } else {
                         startZ = (config.floorOffsets[String(startFloor)] ?? 0) + LINK_Z_OFFSET;
                         endZ = (config.floorOffsets[String(endFloor)] ?? 0) + LINK_Z_OFFSET;
@@ -423,7 +439,7 @@ function updateFacilityLayer(floor, MapboxLayer) {
                 
                 let z;
                 if (isFloorPlanView && floor !== null) {
-                    z = 0.8;
+                    z = FLOOR_PLAN_FACILITY_Z;
                 } else {
                     z = (config.floorOffsets[String(facilityFloor)] ?? 0) + SPACE_HEIGHT + 0.5;
                 }
@@ -549,8 +565,8 @@ function updateRouteLayerForFloor(floor, MapboxLayer) {
                         const endFloor = nodeFloorMap[endNode.properties.node_id] ?? endNode.properties.floor;
                         let startZ, endZ;
                         if (isFloorPlanView && floor !== null) {
-                            startZ = 0.6;
-                            endZ = 0.6;
+                            startZ = FLOOR_PLAN_ROUTE_Z;
+                            endZ = FLOOR_PLAN_ROUTE_Z;
                         } else {
                             startZ = (config.floorOffsets[String(startFloor)] ?? 0) + LINK_Z_OFFSET + 0.2;
                             endZ = (config.floorOffsets[String(endFloor)] ?? 0) + LINK_Z_OFFSET + 0.2;
