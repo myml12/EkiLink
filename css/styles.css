@@ -26,31 +26,21 @@ body {
     border-radius: 16px;
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
     z-index: 10;
-    pointer-events: none;
     line-height: 1.7;
     border: 1px solid rgba(56, 189, 248, 0.2);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    min-width: 260px;
+    max-width: 320px;
 }
 
-/* 駅選択セレクター */
-.station-selector {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.92));
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    color: #f1f5f9;
-    padding: 18px 22px;
-    border-radius: 16px;
-    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-    z-index: 10;
-    border: 1px solid rgba(56, 189, 248, 0.2);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-    min-width: 220px;
+/* Station selector inline in info panel */
+.station-selector-inline {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(56, 189, 248, 0.15);
 }
 
-.station-selector select {
+.station-selector-inline select {
     background: linear-gradient(145deg, rgba(51, 65, 85, 0.9), rgba(30, 41, 59, 0.95));
     color: #f1f5f9;
     border: 1.5px solid rgba(56, 189, 248, 0.25);
@@ -58,7 +48,7 @@ body {
     padding: 11px 16px;
     font-size: 15px;
     cursor: pointer;
-    min-width: 180px;
+    width: 100%;
     font-family: inherit;
     transition: all 0.2s ease;
     appearance: none;
@@ -70,15 +60,147 @@ body {
     font-weight: 500;
 }
 
-.station-selector select:hover {
+.station-selector-inline select:hover {
     border-color: rgba(56, 189, 248, 0.5);
     background-color: rgba(51, 65, 85, 0.9);
 }
 
-.station-selector select:focus {
+.station-selector-inline select:focus {
     outline: none;
     border-color: rgba(56, 189, 248, 0.6);
     box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+
+/* Hierarchy controls */
+.hierarchy-controls {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(56, 189, 248, 0.15);
+}
+
+.hierarchy-control-header {
+    margin-bottom: 10px;
+}
+
+.hierarchy-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.toggle-label {
+    color: #cbd5e1;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+/* Toggle switch */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(51, 65, 85, 0.8);
+    border: 1.5px solid rgba(56, 189, 248, 0.2);
+    transition: all 0.3s ease;
+    border-radius: 26px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 2px;
+    background: #94a3b8;
+    transition: all 0.3s ease;
+    border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.4), rgba(34, 211, 238, 0.35));
+    border-color: rgba(56, 189, 248, 0.6);
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(22px);
+    background: #38bdf8;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+}
+
+.toggle-slider:hover {
+    border-color: rgba(56, 189, 248, 0.4);
+}
+
+/* Floor selector dropdown */
+.floor-selector-dropdown {
+    margin-top: 10px;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.floor-select {
+    background: linear-gradient(145deg, rgba(51, 65, 85, 0.9), rgba(30, 41, 59, 0.95));
+    color: #f1f5f9;
+    border: 1.5px solid rgba(56, 189, 248, 0.25);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    width: 100%;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2338bdf8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 12px center;
+    background-repeat: no-repeat;
+    background-size: 18px;
+    padding-right: 40px;
+    font-weight: 500;
+}
+
+.floor-select:hover {
+    border-color: rgba(56, 189, 248, 0.5);
+    background-color: rgba(51, 65, 85, 0.9);
+}
+
+.floor-select:focus {
+    outline: none;
+    border-color: rgba(56, 189, 248, 0.6);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+
+/* 駅選択セレクター (hidden - now inline in info panel) */
+.station-selector {
+    display: none;
 }
 
 /* 凡例アイテム */
@@ -755,6 +877,36 @@ b {
     transform: translateY(-1px);
 }
 
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+    .info-panel {
+        max-width: calc(100vw - 30px);
+        min-width: 240px;
+        padding: 16px 18px;
+    }
+    
+    .route-search-panel {
+        max-width: calc(100vw - 30px);
+        min-width: 280px;
+        padding: 18px;
+    }
+    
+    .facility-list-panel {
+        width: calc(100vw - 30px);
+        max-width: 360px;
+    }
+    
+    .hierarchy-toggle-row {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .toggle-label {
+        font-size: 0.85em;
+    }
+}
+
 /* トースト通知 */
 .toast {
     position: fixed;
@@ -968,254 +1120,13 @@ b {
     z-index: 1;
 }
 
-/* 階層セレクターパネル - モーダル表示 */
-.floor-selector-panel {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.97));
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    color: #f1f5f9;
-    border-radius: 24px;
-    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-    z-index: 1001;
-    border: 2px solid rgba(56, 189, 248, 0.4);
-    box-shadow: 0 20px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-    min-width: 400px;
-    max-width: 90vw;
-    max-height: 85vh;
-    display: none;
-    animation: fadeInScale 0.3s ease-out;
-}
-
-.floor-selector-panel.show {
-    display: block;
-}
-
-/* モーダルの背景オーバーレイ */
-.floor-selector-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.75);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    z-index: 1000;
-    display: none;
-    animation: fadeIn 0.3s ease-out;
-}
-
-.floor-selector-overlay.show {
-    display: block;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-.floor-selector-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 22px 28px;
-    border-bottom: 2px solid rgba(56, 189, 248, 0.2);
-    background: rgba(30, 41, 59, 0.5);
-    border-radius: 24px 24px 0 0;
-}
-
-.floor-selector-title {
-    color: #38bdf8;
-    font-size: 1.3em;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    letter-spacing: 0.3px;
-}
-
-.floor-selector-subtitle {
-    color: #94a3b8;
-    font-size: 0.85em;
-    font-weight: 400;
-    margin-top: 6px;
-    display: block;
-    line-height: 1.4;
-}
-
-.close-btn-small {
-    background: rgba(51, 65, 85, 0.6);
-    border: none;
-    color: #94a3b8;
-    font-size: 1.3em;
-    cursor: pointer;
-    padding: 0;
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-}
-
-.close-btn-small:hover {
-    background: rgba(239, 68, 68, 0.3);
-    color: #f87171;
-    transform: scale(1.1);
-}
-
-.floor-selector-content {
-    padding: 20px;
-    max-height: 65vh;
-    overflow-y: auto;
-}
-
-.floor-selector-description {
-    color: #cbd5e1;
-    font-size: 0.95em;
-    line-height: 1.6;
-    margin-bottom: 20px;
-    padding: 14px 18px;
-    background: rgba(56, 189, 248, 0.1);
-    border-radius: 12px;
-    border-left: 4px solid #38bdf8;
-}
-
-.floor-btn {
-    display: block;
-    width: 100%;
-    background: linear-gradient(135deg, rgba(51, 65, 85, 0.6), rgba(30, 41, 59, 0.8));
-    color: #e2e8f0;
-    border: 2px solid rgba(56, 189, 248, 0.15);
-    border-radius: 14px;
-    padding: 16px 20px;
-    margin-bottom: 10px;
-    font-size: 1.05em;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    text-align: left;
-    font-family: inherit;
-    letter-spacing: 0.3px;
-}
-
-.floor-btn:last-child {
-    margin-bottom: 0;
-}
-
-.floor-btn:hover {
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(34, 211, 238, 0.15));
-    border-color: rgba(56, 189, 248, 0.4);
-    color: #f1f5f9;
-    transform: translateX(6px) scale(1.02);
-    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
-}
-
-.floor-btn.active {
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.35), rgba(34, 211, 238, 0.3));
-    border-color: rgba(56, 189, 248, 0.7);
-    color: #fff;
-    box-shadow: 0 0 20px rgba(56, 189, 248, 0.4), 0 0 40px rgba(56, 189, 248, 0.2);
-    font-weight: 700;
-    transform: scale(1.03);
-}
-
-.floor-btn-all {
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(22, 163, 74, 0.1));
-    border-color: rgba(34, 197, 94, 0.3);
-    color: #94a3b8;
-    margin-bottom: 20px;
-    padding: 16px 20px;
-    font-size: 1.05em;
-}
-
-.floor-btn-all:hover {
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(22, 163, 74, 0.15));
-    color: #f1f5f9;
-    border-color: rgba(34, 197, 94, 0.4);
-}
-
-.floor-btn-all.active {
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(22, 163, 74, 0.25));
-    border-color: rgba(34, 197, 94, 0.6);
-    color: #4ade80;
-    box-shadow: 0 0 20px rgba(34, 197, 94, 0.35), 0 0 40px rgba(34, 197, 94, 0.15);
-    font-weight: 700;
-}
-
-/* フロアプランビュー切り替えボタン */
-.floor-view-toggle {
-    position: absolute;
-    top: 15px;
-    left: 270px;
-    background: linear-gradient(145deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.92));
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    color: #94a3b8;
-    border: 1.5px solid rgba(56, 189, 248, 0.15);
-    border-radius: 14px;
-    padding: 11px 18px;
-    font-size: 0.9em;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    font-family: inherit;
-    z-index: 14;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.floor-view-toggle:hover {
-    background: linear-gradient(145deg, rgba(56, 189, 248, 0.2), rgba(56, 189, 248, 0.15));
-    border-color: rgba(56, 189, 248, 0.5);
-    color: #38bdf8;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(56, 189, 248, 0.25);
-}
-
-.floor-view-toggle.active {
-    background: linear-gradient(135deg, rgba(56, 189, 248, 0.3), rgba(34, 211, 238, 0.25));
-    border-color: rgba(56, 189, 248, 0.6);
-    color: #38bdf8;
-    box-shadow: 0 0 16px rgba(56, 189, 248, 0.3);
-    font-weight: 700;
-}
-
-.floor-view-toggle svg {
-    flex-shrink: 0;
-}
-
-/* 現在表示中の階層インジケーター */
+/* Old modal styles (hidden - replaced with inline controls) */
+.floor-selector-panel,
+.floor-selector-overlay,
+.floor-view-toggle,
 .current-floor-indicator {
-    position: absolute;
-    top: 70px;
-    left: 270px;
-    background: linear-gradient(145deg, rgba(15, 23, 42, 0.97), rgba(30, 41, 59, 0.95));
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    color: #38bdf8;
-    border: 1.5px solid rgba(56, 189, 248, 0.4);
-    border-radius: 12px;
-    padding: 10px 16px;
-    font-size: 1em;
-    font-weight: 700;
-    z-index: 14;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4), 0 0 20px rgba(56, 189, 248, 0.2);
-    display: none;
+    display: none !important;
 }
 
-.current-floor-indicator.show {
-    display: block;
-}
+/* Removed old modal styles for floor selector */
 
