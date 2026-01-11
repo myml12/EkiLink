@@ -88,10 +88,10 @@ async function switchStation(stationId) {
             }
         });
 
-        // Spaceレイヤーとアウトラインレイヤーとソースを削除
+        // Spaceレイヤーとソースを削除（アウトラインレイヤーは削除済み）
         const layers = map.getStyle().layers.map(l => l.id);
         layers.forEach(id => {
-            if (id !== 'background' && (id.startsWith('space-layer-') || id.startsWith('space-outline-'))) {
+            if (id !== 'background' && id.startsWith('space-layer-')) {
                 try {
                     if (map.getLayer(id)) {
                         map.removeLayer(id);
