@@ -774,33 +774,6 @@ b {
     margin-left: 6px;
 }
 
-.facility-list-toggle {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    background: linear-gradient(145deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.85));
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    color: #94a3b8;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
-    padding: 10px 18px;
-    font-size: 0.9em;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-family: inherit;
-    z-index: 14;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-}
-
-.facility-list-toggle:hover {
-    background: linear-gradient(145deg, rgba(56, 189, 248, 0.15), rgba(56, 189, 248, 0.1));
-    border-color: rgba(56, 189, 248, 0.4);
-    color: #38bdf8;
-    transform: translateY(-1px);
-}
-
 .toast {
     position: fixed;
     top: 20px;

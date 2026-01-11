@@ -402,6 +402,7 @@ function focusOnFacility(facilityId, floorId) {
 
 /**
  * 施設選択パネルを表示（経路検索用）
+ * 設備一覧と同じグループ化ロジックを使用
  */
 function showFacilitySelectPanel(selectionType) {
     // 既存のパネルを削除
@@ -454,36 +455,73 @@ function showFacilitySelectPanel(selectionType) {
         html += `<div class="facility-select-floor-title">${floorData.floorName} <span class="facility-count">(${floorData.facilities.length}件)</span></div>`;
         html += `<div class="facility-select-floor-items">`;
 
-        // カテゴリごとにグループ化（現在の実装と同様）
+        // 同じ階かつ同一カテゴリ（category）の設備をグループ化（設備一覧と同じロジック）
         const facilitiesByCategory = {};
         floorData.facilities.forEach(facility => {
             const category = facility.properties.category || 'その他';
+            const categoryName = getFacilityCategoryName(category);
+            const rawName = facility.properties.name;
+            const name = (rawName && typeof rawName === 'string' && rawName.trim() !== '')
+                ? rawName.trim()
+                : '';
+
+            // カテゴリコード（category）でグループ化
             if (!facilitiesByCategory[category]) {
-                facilitiesByCategory[category] = [];
+                facilitiesByCategory[category] = {
+                    category: category,
+                    categoryName: categoryName,
+                    name: name,
+                    facilities: []
+                };
             }
-            facilitiesByCategory[category].push(facility);
+            facilitiesByCategory[category].facilities.push(facility);
         });
 
-        // カテゴリごとに表示
+        // グループごとに表示（設備一覧と同じロジック）
         Object.keys(facilitiesByCategory).sort().forEach(category => {
-            facilitiesByCategory[category].forEach(facility => {
-                const categoryName = getFacilityCategoryName(category);
-                const name = facility.properties.name && facility.properties.name.trim() !== ''
+            const group = facilitiesByCategory[category];
+            const hasMultiple = group.facilities.length > 1;
+            const groupId = `facility-select-group-${floorKey}-${category}`;
+
+            if (hasMultiple) {
+                // 複数ある場合はプルダウン
+                html += `<div class="facility-list-group">`;
+                html += `<div class="facility-list-group-header" data-group-id="${groupId}">`;
+                html += `<span class="facility-list-group-title">${group.categoryName}</span>`;
+                html += `<span class="facility-list-group-count">(${group.facilities.length}件)</span>`;
+                html += `<span class="facility-list-group-toggle">▼</span>`;
+                html += `</div>`;
+                html += `<div class="facility-list-group-content" id="${groupId}" style="display: none;">`;
+
+                group.facilities.forEach((facility, index) => {
+                    const facilityName = facility.properties.name && facility.properties.name.trim() !== ''
+                        ? facility.properties.name.trim()
+                        : '';
+                    html += `<div class="facility-select-item" data-facility-id="${facility.properties.id}" data-floor-id="${facility._floorId}" data-selection-type="${selectionType}">`;
+                    html += `<div class="facility-select-item-category">${group.categoryName}</div>`;
+                    if (facilityName) {
+                        html += `<div class="facility-select-item-name">${facilityName}</div>`;
+                    } else {
+                        html += `<div class="facility-select-item-name">設備 ${index + 1}</div>`;
+                    }
+                    html += `</div>`;
+                });
+
+                html += `</div>`;
+                html += `</div>`;
+            } else {
+                // 1件のみの場合は通常表示
+                const facility = group.facilities[0];
+                const facilityName = facility.properties.name && facility.properties.name.trim() !== ''
                     ? facility.properties.name.trim()
                     : '';
-                const number = extractFacilityNumber(name, category);
-
                 html += `<div class="facility-select-item" data-facility-id="${facility.properties.id}" data-floor-id="${facility._floorId}" data-selection-type="${selectionType}">`;
-                html += `<div class="facility-select-item-category">${categoryName}`;
-                if (number) {
-                    html += `<span class="facility-list-item-number">${number}</span>`;
+                html += `<div class="facility-select-item-category">${group.categoryName}</div>`;
+                if (facilityName) {
+                    html += `<div class="facility-select-item-name">${facilityName}</div>`;
                 }
                 html += `</div>`;
-                if (name && !number) {
-                    html += `<div class="facility-select-item-name">${name}</div>`;
-                }
-                html += `</div>`;
-            });
+            }
         });
 
         html += `</div></div>`;
@@ -503,6 +541,28 @@ function showFacilitySelectPanel(selectionType) {
         });
     }
 
+    // プルダウンの開閉イベントを設定（設備一覧と同じロジック）
+    const content = document.getElementById('facility-select-panel');
+    if (content) {
+        content.querySelectorAll('.facility-list-group-header').forEach(header => {
+            header.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const groupId = header.dataset.groupId;
+                const groupContent = document.getElementById(groupId);
+                const toggle = header.querySelector('.facility-list-group-toggle');
+
+                if (groupContent) {
+                    const isOpen = groupContent.style.display !== 'none';
+                    groupContent.style.display = isOpen ? 'none' : 'block';
+                    if (toggle) {
+                        toggle.textContent = isOpen ? '▼' : '▲';
+                    }
+                }
+            });
+        });
+    }
+
+    // 施設選択アイテムのクリックイベント
     document.querySelectorAll('.facility-select-item').forEach(item => {
         item.addEventListener('click', () => {
             const facilityId = item.dataset.facilityId;

@@ -30,31 +30,6 @@ let selectedNodesLayer = null; // 選択されたノード表示レイヤー
 // 初期化
 // ============================================================================
 
-// 設備一覧のトグルボタンのイベントリスナー
-function setupFacilityListToggle() {
-    const toggleBtn = document.getElementById('toggle-facility-list');
-    const closeBtn = document.getElementById('close-facility-list');
-    const panel = document.getElementById('facility-list-panel');
-
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
-            if (panel && (panel.style.display === 'none' || !panel.style.display)) {
-                showFacilityList();
-            } else {
-                if (panel) panel.style.display = 'none';
-            }
-        });
-    }
-
-    if (closeBtn) {
-        closeBtn.addEventListener('click', () => {
-            if (panel) {
-                panel.style.display = 'none';
-            }
-        });
-    }
-}
-
 // 新しい選択ボタンのセットアップ
 function setupRouteSelectionButtons() {
     // 出発点 - ポイントから選択
@@ -183,7 +158,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupFloorPlanView();
     }
     
-    setupFacilityListToggle();
     setupRouteSelectionButtons();
     
     // 道案内モーダルの初期化
