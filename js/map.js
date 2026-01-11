@@ -248,7 +248,7 @@ async function setupMap() {
             const floor = nodeFloorMap[d.properties.node_id] ?? d.properties.floor;
             return stationLogic.getFloorColor(floor);
         },
-        stroked: false,
+        stroked: false, // 外枠を表示しない
         parameters: {
             depthTest: true, // 深度テストを有効化（3D表示）
             depthFunc: 519, // GL_LEQUAL

@@ -47,7 +47,7 @@ function showSpaceInfo(props) {
     }
 
     // 表示アニメーション
-    panel.style.display = 'block';
+    panel.classList.remove('visibility-hidden');
     // 次のフレームでアニメーションを開始
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -59,7 +59,7 @@ function showSpaceInfo(props) {
     showSpaceInfo.timeoutId = setTimeout(() => {
         panel.classList.remove('show');
         setTimeout(() => {
-            panel.style.display = 'none';
+            panel.classList.add('visibility-hidden');
         }, 300);
     }, 3000);
 }
