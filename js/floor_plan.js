@@ -21,6 +21,7 @@ let savedCameraState = null; // 3Dビュー時のカメラ状態を保存
 function setupFloorPlanView() {
     const toggleBtn = document.getElementById('toggle-floor-view');
     const closeBtn = document.getElementById('close-floor-selector');
+    const overlay = document.getElementById('floor-selector-overlay');
     
     if (toggleBtn) {
         toggleBtn.addEventListener('click', () => {
@@ -36,9 +37,41 @@ function setupFloorPlanView() {
     
     if (closeBtn) {
         closeBtn.addEventListener('click', () => {
-            exitFloorPlanView();
+            hideFloorSelectorModal();
         });
     }
+    
+    // オーバーレイをクリックしたら閉じる
+    if (overlay) {
+        overlay.addEventListener('click', () => {
+            hideFloorSelectorModal();
+        });
+    }
+}
+
+/**
+ * 階層セレクターモーダルを表示
+ */
+function showFloorSelectorModal() {
+    const selectorPanel = document.getElementById('floor-selector-panel');
+    const overlay = document.getElementById('floor-selector-overlay');
+    
+    if (selectorPanel) selectorPanel.classList.add('show');
+    if (overlay) overlay.classList.add('show');
+    
+    // フロアセレクターを構築（まだ構築されていない場合）
+    buildFloorSelector();
+}
+
+/**
+ * 階層セレクターモーダルを非表示
+ */
+function hideFloorSelectorModal() {
+    const selectorPanel = document.getElementById('floor-selector-panel');
+    const overlay = document.getElementById('floor-selector-overlay');
+    
+    if (selectorPanel) selectorPanel.classList.remove('show');
+    if (overlay) overlay.classList.remove('show');
 }
 
 /**
@@ -66,16 +99,11 @@ function enterFloorPlanView() {
     
     // UIを更新
     const toggleBtn = document.getElementById('toggle-floor-view');
-    const selectorPanel = document.getElementById('floor-selector-panel');
     
     if (toggleBtn) toggleBtn.classList.add('active');
-    if (selectorPanel) selectorPanel.classList.add('show');
     
-    // フロアセレクターを構築
-    buildFloorSelector();
-    
-    // デフォルトで全階層表示
-    selectFloor(null);
+    // モーダルを表示
+    showFloorSelectorModal();
 }
 
 /**
@@ -108,12 +136,13 @@ function exitFloorPlanView() {
     
     // UIを更新
     const toggleBtn = document.getElementById('toggle-floor-view');
-    const selectorPanel = document.getElementById('floor-selector-panel');
     const floorIndicator = document.getElementById('current-floor-indicator');
     
     if (toggleBtn) toggleBtn.classList.remove('active');
-    if (selectorPanel) selectorPanel.classList.remove('show');
     if (floorIndicator) floorIndicator.classList.remove('show');
+    
+    // モーダルを非表示
+    hideFloorSelectorModal();
     
     // 全レイヤーを表示（3D表示に戻す）
     showAllFloors();
@@ -129,16 +158,18 @@ function buildFloorSelector() {
     // 階層をソート（上から下へ）
     const sortedFloors = [...config.floors].sort((a, b) => b.nodeFloor - a.nodeFloor);
     
-    let html = '';
+    let html = '<div class="floor-selector-description">';
+    html += '階層を選択すると、その階層のみが表示されます。別の階層のノードを誤って選択することを防ぎます。';
+    html += '</div>';
     
     // 「全階層」ボタン
-    html += `<button class="floor-btn floor-btn-all active" data-floor="all">全階層（3D）</button>`;
+    html += `<button class="floor-btn floor-btn-all active" data-floor="all">全階層（3D表示）</button>`;
     
     // 各階層ボタン
     sortedFloors.forEach(f => {
         const floorName = stationLogic.getFloorName(f.nodeFloor);
         const color = config.floorColors[f.id] || '#38bdf8';
-        html += `<button class="floor-btn" data-floor="${f.nodeFloor}" data-floor-id="${f.id}" style="border-left: 3px solid ${color};">${floorName}</button>`;
+        html += `<button class="floor-btn" data-floor="${f.nodeFloor}" data-floor-id="${f.id}" style="border-left: 4px solid ${color};">${floorName}</button>`;
     });
     
     content.innerHTML = html;
@@ -176,6 +207,8 @@ function selectFloor(floor, floorId = null) {
         if (floorIndicator) {
             floorIndicator.classList.remove('show');
         }
+        // モーダルを非表示
+        hideFloorSelectorModal();
     } else {
         // 特定の階層のみ表示
         showSingleFloor(floor, floorId);
@@ -184,6 +217,10 @@ function selectFloor(floor, floorId = null) {
             floorIndicator.textContent = `📍 ${floorName}`;
             floorIndicator.classList.add('show');
         }
+        // モーダルを非表示
+        hideFloorSelectorModal();
+        // トーストで通知
+        showToast(`${stationLogic.getFloorName(floor)}を表示中です`);
     }
 }
 

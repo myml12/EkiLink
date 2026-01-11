@@ -173,22 +173,32 @@
         <div id="space-info-content"></div>
     </div>
 
+    <!-- 階層セレクター用オーバーレイ -->
+    <div id="floor-selector-overlay" class="floor-selector-overlay"></div>
+    
     <!-- 階層セレクター（フロアプランビュー用） -->
     <div id="floor-selector-panel" class="floor-selector-panel">
         <div class="floor-selector-header">
-            <span class="floor-selector-title">階層表示</span>
-            <button id="close-floor-selector" class="close-btn-small" title="3Dビューに戻る">×</button>
+            <div>
+                <span class="floor-selector-title">🏢 階層を選択</span>
+                <span class="floor-selector-subtitle">ポイントを選択する階層を指定してください</span>
+            </div>
+            <button id="close-floor-selector" class="close-btn-small" title="閉じる">×</button>
         </div>
-        <div id="floor-selector-content" class="floor-selector-content"></div>
+        <div id="floor-selector-content" class="floor-selector-content">
+            <div class="floor-selector-description">
+                階層を選択すると、その階層のみが表示されます。別の階層のノードを誤って選択することを防ぎます。
+            </div>
+        </div>
     </div>
     
     <!-- フロアプランビュー切り替えボタン -->
-    <button id="toggle-floor-view" class="floor-view-toggle" title="フロアプランビュー（階層別平面図）">
+    <button id="toggle-floor-view" class="floor-view-toggle" title="階層別表示（階層を選択して表示）">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
             <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
             <path d="M7 12h10v2H7zm0-4h10v2H7zm0 8h7v2H7z"/>
         </svg>
-        平面図
+        階層別表示
     </button>
     
     <!-- 現在の階層インジケーター -->
