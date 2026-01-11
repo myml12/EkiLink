@@ -163,13 +163,15 @@ function buildFloorSelector() {
     html += '</div>';
     
     // 「全階層」ボタン
-    html += `<button class="floor-btn floor-btn-all active" data-floor="all">全階層（3D表示）</button>`;
+    const allFloorsActive = selectedFloor === null ? 'active' : '';
+    html += `<button class="floor-btn floor-btn-all ${allFloorsActive}" data-floor="all">全階層（3D表示）</button>`;
     
     // 各階層ボタン
     sortedFloors.forEach(f => {
         const floorName = stationLogic.getFloorName(f.nodeFloor);
         const color = config.floorColors[f.id] || '#38bdf8';
-        html += `<button class="floor-btn" data-floor="${f.nodeFloor}" data-floor-id="${f.id}" style="border-left: 4px solid ${color};">${floorName}</button>`;
+        const isActive = selectedFloor === f.nodeFloor ? 'active' : '';
+        html += `<button class="floor-btn ${isActive}" data-floor="${f.nodeFloor}" data-floor-id="${f.id}" style="border-left: 4px solid ${color};">${floorName}</button>`;
     });
     
     content.innerHTML = html;
@@ -217,8 +219,8 @@ function selectFloor(floor, floorId = null) {
             floorIndicator.textContent = `📍 ${floorName}`;
             floorIndicator.classList.add('show');
         }
-        // モーダルを非表示
-        hideFloorSelectorModal();
+        // モーダルは開いたままにする（ユーザーが複数の階層を簡単に比較できるようにするため）
+        // 「全階層」選択時のみモーダルを閉じる
         // トーストで通知
         showToast(`${stationLogic.getFloorName(floor)}を表示中です`);
     }
@@ -348,6 +350,7 @@ function updateNodeLayer(floor, MapboxLayer) {
             const fillColor = stationLogic.getFloorColor(nodeFloor);
             return getNodeStrokeColor(fillColor);
         },
+        getLineWidth: 1, // 明示的に設定してフィルタリング時にゴーストアウトラインを防ぐ
         lineWidthMinPixels: 1,
         lineWidthMaxPixels: 2,
         parameters: {
