@@ -63,9 +63,9 @@ function buildRouteGraph(barrierFree = false, avoidElevator = false) {
             } else {
                 // distanceプロパティがない場合は座標から計算
                 distance = calculateDistance(
-                    nodeCoords[startId][0], nodeCoords[startId][1],
-                    nodeCoords[endId][0], nodeCoords[endId][1]
-                );
+                nodeCoords[startId][0], nodeCoords[startId][1],
+                nodeCoords[endId][0], nodeCoords[endId][1]
+            );
             }
 
             // 双方向のリンクを追加
@@ -154,16 +154,25 @@ function handleRouteNodeSelection(node) {
     const floor = nodeFloorMap[nodeId] ?? node.properties.floor;
     const floorName = stationLogic.getFloorName(floor);
 
+    // 位置情報を取得
+    const inOutText = node.properties.in_out === 1 ? '屋内' :
+        node.properties.in_out === 2 ? '屋外' :
+            node.properties.in_out === 3 ? '出入口付近' : '';
+    
+    const displayText = inOutText ? `${inOutText} (${floorName})` : `ポイント (${floorName})`;
+
     if (routeSelectionMode === 'start') {
         routeStartNode = nodeId;
-        document.getElementById('start-info').textContent = `Node (${floorName})`;
-        document.getElementById('select-start').classList.remove('active');
+        document.getElementById('start-info').textContent = displayText;
+        clearSelectionButtonsActive();
         routeSelectionMode = null;
+        routeSelectionInputMode = null;
     } else if (routeSelectionMode === 'end') {
         routeEndNode = nodeId;
-        document.getElementById('end-info').textContent = `Node (${floorName})`;
-        document.getElementById('select-end').classList.remove('active');
+        document.getElementById('end-info').textContent = displayText;
+        clearSelectionButtonsActive();
         routeSelectionMode = null;
+        routeSelectionInputMode = null;
     }
 
     updateSelectedNodesLayer();
@@ -243,13 +252,15 @@ function handleRouteFacilitySelection(spaceFeature) {
     if (routeSelectionMode === 'start') {
         routeStartNode = nodeId;
         document.getElementById('start-info').textContent = `${categoryName} (${floorName})`;
-        document.getElementById('select-start').classList.remove('active');
+        clearSelectionButtonsActive();
         routeSelectionMode = null;
+        routeSelectionInputMode = null;
     } else if (routeSelectionMode === 'end') {
         routeEndNode = nodeId;
         document.getElementById('end-info').textContent = `${categoryName} (${floorName})`;
-        document.getElementById('select-end').classList.remove('active');
+        clearSelectionButtonsActive();
         routeSelectionMode = null;
+        routeSelectionInputMode = null;
     }
 
     updateSelectedNodesLayer();
@@ -326,7 +337,7 @@ function performRouteSearch() {
  */
 function updateRouteSearchButton() {
     // 出発と到着が両方選択されている場合は自動的に経路検索を実行
-    if (routeStartNode && routeEndNode && routeGraph) {
+    if (routeStartNode && routeEndNode) {
         performRouteSearch();
     }
 }
@@ -534,11 +545,11 @@ function clearRoute() {
     routeStartNode = null;
     routeEndNode = null;
     routeSelectionMode = null;
+    routeSelectionInputMode = null;
 
     document.getElementById('start-info').textContent = '未選択';
     document.getElementById('end-info').textContent = '未選択';
-    document.getElementById('select-start').classList.remove('active');
-    document.getElementById('select-end').classList.remove('active');
+    clearSelectionButtonsActive();
     updateSelectedNodesLayer();
 
     // 再生ボタンを非表示
@@ -546,6 +557,9 @@ function clearRoute() {
     if (playBtn) {
         playBtn.style.display = 'none';
     }
+
+    // 道案内モーダルを閉じる
+    closeNavigationModal();
 
     // 経路レイヤーをクリア
     const routeData = {

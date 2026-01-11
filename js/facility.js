@@ -25,6 +25,55 @@ function getFacilityCategoryName(category) {
 }
 
 /**
+ * 施設名から番号を抽出（改札口や出口の番号）
+ * @param {string} name - 施設名
+ * @param {string} category - カテゴリコード
+ * @returns {string|null} - 番号（存在しない場合はnull）
+ */
+function extractFacilityNumber(name, category) {
+    if (!name || name.trim() === '') return null;
+
+    const trimmedName = name.trim();
+
+    // 改札口・出口のカテゴリの場合
+    if (category === 'F106' || category === 'F108') {
+        // 数字やアルファベットのパターンを抽出
+        // 例: "A1", "1番", "東口", "中央改札"
+        const numberMatch = trimmedName.match(/^([A-Za-z]?\d+|[A-Za-z]+\d*|東|西|南|北|中央)/);
+        if (numberMatch) {
+            return numberMatch[1];
+        }
+        // 名前全体が短い場合はそのまま返す
+        if (trimmedName.length <= 10) {
+            return trimmedName;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * 設備の表示名を生成（UI用）
+ * IDは表示せず、カテゴリ名と名称のみ
+ */
+function getFacilityDisplayName(facility) {
+    const categoryName = getFacilityCategoryName(facility.properties.category);
+    const name = facility.properties.name && facility.properties.name.trim() !== ''
+        ? facility.properties.name.trim()
+        : null;
+
+    // 改札口や出口の番号を抽出
+    const number = extractFacilityNumber(name, facility.properties.category);
+
+    if (number) {
+        return `${categoryName} ${number}`;
+    } else if (name) {
+        return `${categoryName} - ${name}`;
+    }
+    return categoryName;
+}
+
+/**
  * 設備一覧を表示する関数
  */
 function showFacilityList() {
@@ -83,7 +132,7 @@ function showFacilityList() {
             const name = (rawName && typeof rawName === 'string' && rawName.trim() !== '')
                 ? rawName.trim()
                 : '';
-            
+
             // カテゴリコード（category）でグループ化
             if (!facilitiesByCategory[category]) {
                 facilitiesByCategory[category] = {
@@ -102,7 +151,7 @@ function showFacilityList() {
             const hasMultiple = group.facilities.length > 1;
             // グループIDはカテゴリコードから安全な文字列に変換
             const groupId = `facility-group-${floorKey}-${category}`;
-            
+
             if (hasMultiple) {
                 // 複数ある場合はプルダウン
                 html += `<div class="facility-list-group">`;
@@ -112,7 +161,7 @@ function showFacilityList() {
                 html += `<span class="facility-list-group-toggle">▼</span>`;
                 html += `</div>`;
                 html += `<div class="facility-list-group-content" id="${groupId}" style="display: none;">`;
-                
+
                 group.facilities.forEach((facility, index) => {
                     const facilityName = facility.properties.name && facility.properties.name.trim() !== ''
                         ? facility.properties.name.trim()
@@ -126,7 +175,7 @@ function showFacilityList() {
                     }
                     html += `</div>`;
                 });
-                
+
                 html += `</div>`;
                 html += `</div>`;
             } else {
@@ -159,7 +208,7 @@ function showFacilityList() {
             const groupId = header.dataset.groupId;
             const groupContent = document.getElementById(groupId);
             const toggle = header.querySelector('.facility-list-group-toggle');
-            
+
             if (groupContent) {
                 const isOpen = groupContent.style.display !== 'none';
                 groupContent.style.display = isOpen ? 'none' : 'block';
@@ -328,8 +377,14 @@ function focusOnFacility(facilityId, floorId) {
 
         // 出発地選択モードにする
         routeSelectionMode = 'start';
-        document.getElementById('select-start').classList.add('active');
-        document.getElementById('select-end').classList.remove('active');
+        routeSelectionInputMode = 'point';
+
+        // 選択ボタンの状態を更新
+        clearSelectionButtonsActive();
+        const selectStartPoint = document.getElementById('select-start-point');
+        if (selectStartPoint) {
+            selectStartPoint.classList.add('active');
+        }
 
         // トーストを表示
         showToast('出発地点を選択してください');
@@ -340,13 +395,185 @@ function focusOnFacility(facilityId, floorId) {
         // 出発と到着が両方選択されている場合は自動的に経路検索を実行
         updateRouteSearchButton();
 
-        // 設備一覧パネルを閉じる
-        const facilityListPanel = document.getElementById('facility-list-panel');
-        if (facilityListPanel) {
-            facilityListPanel.style.display = 'none';
-        }
     } else {
         console.warn('設備と同じフロアのノードが見つかりませんでした');
     }
+}
+
+/**
+ * 施設選択パネルを表示（経路検索用）
+ */
+function showFacilitySelectPanel(selectionType) {
+    // 既存のパネルを削除
+    closeFacilitySelectPanel();
+
+    // 設備を階層ごとに整理
+    const facilitiesByFloor = {};
+
+    for (const floorId in facilitiesData) {
+        if (!facilitiesData[floorId] || !facilitiesData[floorId].features) continue;
+
+        const floorConfig = config.floors.find(f => f.id === floorId);
+        if (!floorConfig) continue;
+
+        const floorName = stationLogic.getFloorName(floorConfig.nodeFloor);
+        const floorKey = `${floorConfig.nodeFloor}_${floorId}`;
+
+        if (!facilitiesByFloor[floorKey]) {
+            facilitiesByFloor[floorKey] = {
+                floorName: floorName,
+                floorOrdinal: floorConfig.nodeFloor,
+                floorId: floorId,
+                facilities: []
+            };
+        }
+
+        facilitiesData[floorId].features.forEach(facility => {
+            facilitiesByFloor[floorKey].facilities.push({
+                ...facility,
+                _floorId: floorId
+            });
+        });
+    }
+
+    // 階層順にソート（上から下へ）
+    const sortedFloors = Object.keys(facilitiesByFloor).sort((a, b) => {
+        return facilitiesByFloor[b].floorOrdinal - facilitiesByFloor[a].floorOrdinal;
+    });
+
+    let html = '<div class="facility-select-panel" id="facility-select-panel">';
+    html += '<div class="facility-select-header">';
+    html += `<h3>施設を選択 <span class="selection-type ${selectionType === 'end' ? 'end' : ''}">${selectionType === 'start' ? '出発点' : '到着点'}</span></h3>`;
+    html += '<button class="close-btn" id="facility-select-close-btn" aria-label="閉じる" title="閉じる">×</button>';
+    html += '</div>';
+    html += '<div class="facility-select-content">';
+
+    sortedFloors.forEach(floorKey => {
+        const floorData = facilitiesByFloor[floorKey];
+        html += `<div class="facility-select-floor">`;
+        html += `<div class="facility-select-floor-title">${floorData.floorName} <span class="facility-count">(${floorData.facilities.length}件)</span></div>`;
+        html += `<div class="facility-select-floor-items">`;
+
+        // カテゴリごとにグループ化（現在の実装と同様）
+        const facilitiesByCategory = {};
+        floorData.facilities.forEach(facility => {
+            const category = facility.properties.category || 'その他';
+            if (!facilitiesByCategory[category]) {
+                facilitiesByCategory[category] = [];
+            }
+            facilitiesByCategory[category].push(facility);
+        });
+
+        // カテゴリごとに表示
+        Object.keys(facilitiesByCategory).sort().forEach(category => {
+            facilitiesByCategory[category].forEach(facility => {
+                const categoryName = getFacilityCategoryName(category);
+                const name = facility.properties.name && facility.properties.name.trim() !== ''
+                    ? facility.properties.name.trim()
+                    : '';
+                const number = extractFacilityNumber(name, category);
+
+                html += `<div class="facility-select-item" data-facility-id="${facility.properties.id}" data-floor-id="${facility._floorId}" data-selection-type="${selectionType}">`;
+                html += `<div class="facility-select-item-category">${categoryName}`;
+                if (number) {
+                    html += `<span class="facility-list-item-number">${number}</span>`;
+                }
+                html += `</div>`;
+                if (name && !number) {
+                    html += `<div class="facility-select-item-name">${name}</div>`;
+                }
+                html += `</div>`;
+            });
+        });
+
+        html += `</div></div>`;
+    });
+
+    html += '</div></div>';
+
+    // パネルをDOMに追加
+    document.body.insertAdjacentHTML('beforeend', html);
+
+    // クリックイベントを設定
+    const closeBtn = document.getElementById('facility-select-close-btn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            closeFacilitySelectPanel();
+            clearSelectionButtonsActive();
+        });
+    }
+
+    document.querySelectorAll('.facility-select-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const facilityId = item.dataset.facilityId;
+            const floorId = item.dataset.floorId;
+            const type = item.dataset.selectionType;
+            selectFacilityForRoute(facilityId, floorId, type);
+        });
+    });
+}
+
+/**
+ * 施設選択パネルを閉じる
+ */
+function closeFacilitySelectPanel() {
+    const panel = document.getElementById('facility-select-panel');
+    if (panel) {
+        panel.remove();
+    }
+}
+
+/**
+ * 経路検索用の施設選択
+ */
+function selectFacilityForRoute(facilityId, floorId, selectionType) {
+    if (!facilitiesData[floorId]) {
+        console.warn('設備データが見つかりません:', floorId);
+        return;
+    }
+
+    const facility = facilitiesData[floorId].features.find(f => f.properties.id === facilityId);
+    if (!facility) {
+        console.warn('設備が見つかりません:', facilityId);
+        return;
+    }
+
+    const coords = facility.geometry.coordinates;
+    const lng = coords[0];
+    const lat = coords[1];
+
+    // 同じフロアで最も近いノードを探す
+    const nearestNode = findNearestNodeOnSameFloor(lng, lat, floorId);
+    if (!nearestNode) {
+        showToast('近くのポイントが見つかりませんでした');
+        return;
+    }
+
+    const nodeId = nearestNode.properties.node_id;
+    const nodeFloor = nodeFloorMap[nodeId] ?? nearestNode.properties.floor;
+    const floorName = stationLogic.getFloorName(nodeFloor);
+    const displayName = getFacilityDisplayName(facility);
+
+    if (selectionType === 'start') {
+        routeStartNode = nodeId;
+        document.getElementById('start-info').textContent = `${displayName} (${floorName})`;
+        clearSelectionButtonsActive();
+    } else {
+        routeEndNode = nodeId;
+        document.getElementById('end-info').textContent = `${displayName} (${floorName})`;
+        clearSelectionButtonsActive();
+    }
+
+    routeSelectionMode = null;
+    routeSelectionInputMode = null;
+    closeFacilitySelectPanel();
+
+    // 選択ノードレイヤーを更新
+    updateSelectedNodesLayer();
+
+    // 出発と到着が両方選択されている場合は自動的に経路検索を実行
+    updateRouteSearchButton();
+
+    showToast(`${selectionType === 'start' ? '出発点' : '到着点'}を設定しました`);
 }
 
