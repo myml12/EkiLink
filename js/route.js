@@ -262,7 +262,8 @@ function performRouteSearch() {
     }
 
     // 道案内モーダルを表示
-    showNavigationModal(path);
+    // コメントアウト: 道案内モーダルは見にくいため一時的に非表示
+    // showNavigationModal(path);
 }
 
 /**
