@@ -57,8 +57,10 @@ function playRouteAnimation() {
 
     // マップのbearingを安全に取得するヘルパー関数
     function getSafeBearing() {
-        // getBearing()は通常は数値を返すが、念のため0をデフォルトとする
-        return map.getBearing() || 0;
+        // getBearing()は通常は数値(0-360)を返す
+        // 万が一NaNやundefinedの場合は0(北向き)を返す
+        const bearing = map.getBearing();
+        return (typeof bearing === 'number' && !isNaN(bearing)) ? bearing : 0;
     }
 
     // カメラのbearingを計算する関数
