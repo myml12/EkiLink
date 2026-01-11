@@ -41,6 +41,7 @@
     <script src="./js/utils.js"></script>
     <script src="./js/route.js"></script>
     <script src="./js/route_animation.js"></script>
+    <script src="./js/floor_plan.js"></script>
     <script src="./js/station.js"></script>
     <script src="./js/map.js"></script>
     <script src="./js/facility.js"></script>
@@ -172,19 +173,26 @@
         <div id="space-info-content"></div>
     </div>
 
-    <!-- 設備一覧パネル -->
-    <div id="facility-list-panel" class="facility-list-panel" style="display: none;">
-        <div class="facility-list-header">
-            <h3>設備一覧</h3>
-            <div class="facility-list-header-buttons">
-                <button id="close-facility-list" class="close-btn">×</button>
-            </div>
+    <!-- 階層セレクター（フロアプランビュー用） -->
+    <div id="floor-selector-panel" class="floor-selector-panel">
+        <div class="floor-selector-header">
+            <span class="floor-selector-title">階層表示</span>
+            <button id="close-floor-selector" class="close-btn-small" title="3Dビューに戻る">×</button>
         </div>
-        <div id="facility-list-content" class="facility-list-content"></div>
+        <div id="floor-selector-content" class="floor-selector-content"></div>
     </div>
-
-    <!-- 設備一覧ボタン -->
-    <button id="toggle-facility-list" class="facility-list-toggle">設備一覧</button>
+    
+    <!-- フロアプランビュー切り替えボタン -->
+    <button id="toggle-floor-view" class="floor-view-toggle" title="フロアプランビュー（階層別平面図）">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+            <path d="M7 12h10v2H7zm0-4h10v2H7zm0 8h7v2H7z"/>
+        </svg>
+        平面図
+    </button>
+    
+    <!-- 現在の階層インジケーター -->
+    <div id="current-floor-indicator" class="current-floor-indicator"></div>
 
     <!-- トースト通知 -->
     <div id="toast" class="toast">

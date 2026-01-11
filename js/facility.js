@@ -497,8 +497,14 @@ function focusOnFacility(facilityId, floorId) {
 
         // 出発地選択モードにする
         routeSelectionMode = 'start';
-        document.getElementById('select-start').classList.add('active');
-        document.getElementById('select-end').classList.remove('active');
+        routeSelectionInputMode = 'point';
+        
+        // 選択ボタンの状態を更新
+        clearSelectionButtonsActive();
+        const selectStartPoint = document.getElementById('select-start-point');
+        if (selectStartPoint) {
+            selectStartPoint.classList.add('active');
+        }
 
         // トーストを表示
         showToast('現在地を選択してください');
@@ -508,12 +514,6 @@ function focusOnFacility(facilityId, floorId) {
 
         // 出発と到着が両方選択されている場合は自動的に経路検索を実行
         updateRouteSearchButton();
-
-        // 設備一覧パネルを閉じる
-        const facilityListPanel = document.getElementById('facility-list-panel');
-        if (facilityListPanel) {
-            facilityListPanel.style.display = 'none';
-        }
     } else {
         console.warn('設備と同じフロアのノードが見つかりませんでした');
     }

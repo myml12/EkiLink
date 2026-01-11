@@ -51,10 +51,23 @@ async function switchStation(stationId) {
 
     currentStation = stationId;
 
-    // 設備一覧パネルが開いているかチェック（表示されているかどうか）
-    const facilityListPanel = document.getElementById('facility-list-panel');
-    const wasFacilityListOpen = facilityListPanel &&
-        window.getComputedStyle(facilityListPanel).display !== 'none';
+    // フロアプランビューが有効な場合はリセット
+    if (typeof isFloorPlanView !== 'undefined' && isFloorPlanView) {
+        if (typeof exitFloorPlanView === 'function') {
+            // カメラ状態を保存せずにリセット
+            isFloorPlanView = false;
+            selectedFloor = null;
+            savedCameraState = null;
+            
+            const toggleBtn = document.getElementById('toggle-floor-view');
+            const selectorPanel = document.getElementById('floor-selector-panel');
+            const floorIndicator = document.getElementById('current-floor-indicator');
+            
+            if (toggleBtn) toggleBtn.classList.remove('active');
+            if (selectorPanel) selectorPanel.classList.remove('show');
+            if (floorIndicator) floorIndicator.classList.remove('show');
+        }
+    }
 
     // 施設選択パネルを閉じる
     closeFacilitySelectPanel();
@@ -172,10 +185,6 @@ async function switchStation(stationId) {
         map.setPitch(config.pitch);
         map.setBearing(config.bearing);
         await setupMap();
-        // 設備一覧パネルが開いていた場合は再表示（スクロール位置もリセットされる）
-        if (wasFacilityListOpen && typeof showFacilityList === 'function') {
-            showFacilityList();
-        }
     } else {
         // 新規にマップを作成
         map = new maplibregl.Map({
@@ -340,10 +349,6 @@ async function switchStation(stationId) {
         // 新規マップの場合はloadイベントを待つ
         map.on('load', async () => {
             await setupMap();
-            // 設備一覧パネルが開いていた場合は再表示（スクロール位置もリセットされる）
-            if (wasFacilityListOpen && typeof showFacilityList === 'function') {
-                showFacilityList();
-            }
         });
     }
 }
