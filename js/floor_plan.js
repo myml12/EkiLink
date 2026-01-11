@@ -79,7 +79,7 @@ function enterFloorPlanView() {
     // ドロップダウンを表示
     const floorSelectorDropdown = document.getElementById('floor-selector-dropdown');
     if (floorSelectorDropdown) {
-        floorSelectorDropdown.style.display = 'block';
+        floorSelectorDropdown.classList.add('show');
     }
     
     // 階層セレクターを構築
@@ -120,7 +120,7 @@ function exitFloorPlanView() {
     // ドロップダウンを非表示
     const floorSelectorDropdown = document.getElementById('floor-selector-dropdown');
     if (floorSelectorDropdown) {
-        floorSelectorDropdown.style.display = 'none';
+        floorSelectorDropdown.classList.remove('show');
     }
     
     // 階層選択をリセット

@@ -153,7 +153,12 @@ body {
 /* Floor selector dropdown */
 .floor-selector-dropdown {
     margin-top: 10px;
+    display: none;
     animation: slideDown 0.3s ease-out;
+}
+
+.floor-selector-dropdown.show {
+    display: block;
 }
 
 @keyframes slideDown {
