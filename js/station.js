@@ -183,9 +183,9 @@ async function switchStation(stationId) {
                     'carto-dark': {
                         type: 'raster',
                         tiles: [
-                            'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-                            'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
-                            'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+                            `https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png?key=${encodeURIComponent(window.EKILINK_CONFIG.cartoApiKey)}`,
+                            `https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png?key=${encodeURIComponent(window.EKILINK_CONFIG.cartoApiKey)}`,
+                            `https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png?key=${encodeURIComponent(window.EKILINK_CONFIG.cartoApiKey)}`
                         ],
                         tileSize: 256,
                         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>'
